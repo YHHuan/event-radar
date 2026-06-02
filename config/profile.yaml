@@ -1,0 +1,232 @@
+# Event Radar — 個人化品味設定 (Salmon)
+# 改這份 = 改系統靈魂。rules.py 與 Claude 打分都讀這裡。
+
+horizon_days: 90
+
+regions:
+  primary: ["台北市", "台北", "臺北市", "新北市", "新北"]
+  secondary: ["基隆市", "基隆", "桃園市", "桃園"]
+
+age_context: "20s"
+# 註:會為了夠好的演出跨縣市(已購票《COMPANY》在臺中)→ 他縣市只 demote 不 drop。
+discovery_style:
+  - independent       # 獨立
+  - niche             # 小眾
+  - live              # 現場感
+  - participatory     # 參與式
+  - arts_culture      # 藝文
+  - social_practice   # 社區/社會議題
+  - urban_experience  # 城市體驗/街遊導覽
+  - nature_experience # 夜間生態/自然沉浸
+  - food_experience   # 料理/異國/吃到飽
+  - subculture        # 機車改裝/工藝/偶像/curiosity 展
+  - folk_culture      # 民俗/祭典/紙紮
+  - jazz_music        # 爵士
+
+# ── 加分權重(rules.py 用,可調) ──
+weights:
+  source_whitelist: 15      # 命中白名單場館/主辦/常看平台
+  strong_keyword: 12
+  medium_keyword: 5
+  niche_indie: 8            # 小型場館/學生製作/獨立主辦/實驗
+  participatory_live: 8     # 真人圖書館/實境/沉浸/工作坊/料理/走讀
+  utility: 6                # 90天內 + 地區 + 週五晚/週末 + 資訊完整 + 票價合理
+  noise_penalty: -40        # 命中垃圾訊號
+
+strong_positive_keywords:
+  - 後搖
+  - post-rock
+  - postrock
+  - 獨立音樂
+  - indie
+  - livehouse
+  - live house
+  - 發片
+  - 專場
+  - 小劇場
+  - 實驗劇場
+  - 黑盒子
+  - 讀劇
+  - 畢業公演
+  - 音樂劇
+  - 外百老匯
+  - open mic
+  - 開放麥
+  - 單口喜劇
+  - stand-up
+  - standup
+  - 即興喜劇
+  - 真人圖書館
+  - 社區實踐
+  - 城市走讀
+  - 走讀
+  - 料理體驗
+  - 共食
+  - 餐桌
+  - 工作坊
+  - 沉浸式
+  - 參與式
+  - 實境
+  - 社交實驗
+  # ── 2026-05-24 從 Salmon 實際購票/收藏清單補 ──
+  - 街遊
+  - Hidden Taipei
+  - 在地導覽
+  - 夜間生態
+  - 生態體驗
+  - 夜遊
+  - 夜行
+  - 爵士
+  - jazz
+  - 異國料理
+  - 美食體驗
+  - 吃到飽
+  - 實用射擊
+  - IPSC
+
+medium_positive_keywords:
+  - 展演
+  - 藝文
+  - 放映
+  - 市集
+  - 獨立出版
+  - 藝術家座談
+  - 座談
+  - 地方創生
+  - 社會議題
+  - 文化行動
+  - 青年
+  - 校園製作
+  - 跨域
+  - 實驗性
+  - 策展
+  # ── 2026-05-24 從 Salmon 收藏清單補(較廣/curiosity 向) ──
+  - 詩
+  - 詩人
+  - 文學
+  - 創作展
+  - 民俗
+  - 祭典
+  - 普渡
+  - 紙紮
+  - 偶像
+  - 公演
+  - 工藝
+  - 改裝
+  - 機車
+  - 博覽會
+  - 大展
+  - 導覽
+  - 體驗
+  # ── 2026-05-25 Salmon 補:展/市集/二手 ──
+  - 市集
+  - 二手
+  - 跳蚤
+  - 拍賣
+  - 快閃
+  - 選物
+  - 古物
+  - 古道具
+  - 世貿
+  - 展售
+  - 黑膠
+  # ── 2026-05-31 Salmon 補:影展(多在 OPENTIX,需加權才浮上來) ──
+  - 影展
+  - 電影節
+  - 台北電影節
+  - 金馬
+  - 金馬奇幻
+  - 紀錄片
+  - 數位修復
+  - 4K修復
+  - 選片
+  - 放映院
+
+# 命中即重扣 / 視為垃圾
+negative_keywords:
+  - 投資
+  - 保險
+  - 房地產
+  - 房產
+  - 直銷
+  - 招商
+  - 加盟
+  - 創業說明會
+  - 企業培訓
+  - 企業內訓
+  - 行銷課
+  - 理財
+  - 被動收入
+  - 財富自由
+  - 月入
+  - 翻轉人生
+  - 成功學
+  - 名師
+  - AI賺錢
+  - 副業
+  - 流量變現
+  - 個人品牌
+  - 免費說明會
+  - 免費體驗
+  - 身心靈
+  - 水晶
+  - 塔羅課程
+  - 能量療癒
+  - 親子          # 預設降權,可在 toggles 開
+  - 兒童
+  - 純線上
+  - 線上課程
+
+# 硬垃圾:詐騙/MLM/金融招募類。protect_keywords 也救不了(永遠扣分+drop)。
+# 註:房地產/房產 刻意「不」放這裡 — Salmon 收藏過台灣國際房地產博覽會。
+#     博覽會/大展 是他愛逛的 curiosity,所以 房地產 只當軟垃圾(demote 可救),
+#     真正詐騙味的字(投資/被動收入/財富自由/免費說明會)才硬擋。
+hard_negative_keywords:
+  - 投資
+  - 保險
+  - 直銷
+  - 招商
+  - 加盟
+  - 創業說明會
+  - 企業培訓
+  - 企業內訓
+  - 理財
+  - 被動收入
+  - 財富自由
+  - 月入
+  - 翻轉人生
+  - 成功學
+  - AI賺錢
+  - 副業
+  - 流量變現
+  - 免費說明會
+
+# 不誤殺:這些含「工作坊/講座」也要保留,交給 Claude 評(只擋『軟』負向如親子/線上)
+protect_keywords:
+  - 真人圖書館
+  - 社區實踐
+  - 藝術家座談
+  - 劇場工作坊
+  - 料理體驗
+  - 即興喜劇
+  - 城市走讀
+  - 讀劇
+
+toggles:
+  include_kids: false        # 開了就不扣親子
+  include_online: false      # 開了就不扣純線上
+  weekend_bonus: true        # 週五晚/週末加分
+
+# ── 信用卡 presale(售票頁「【Mastercard專區】」「玉山卡友專區」會被標 💳<卡>)──
+# mine = 你持有的卡;命中的活動會加權(my_card_bonus)+ 前台可篩。
+# 註:國泰 CUBE 卡本身是 Mastercard,故 Mastercard 專區你也用得到。
+credit_cards:
+  mine:
+    - 國泰CUBE
+    - 中信
+    - Mastercard
+
+# ── 分數三層門檻 ──
+tiers:
+  discover_min: 80
+  maybe_min: 50

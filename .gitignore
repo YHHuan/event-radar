@@ -1,0 +1,38 @@
+# local-only
+data/
+*.db
+*.sqlite3
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# secrets / per-device
+*.env
+.env
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# scratch
+agent/scratch/
+.gstack/
+
+# ── 個人/內部(不公開;本地保留)。註:.gitignore 不支援行內註解,pattern 須獨立一行 ──
+# 個人購票/收藏紀錄
+config/seeds.md
+# 內部建置筆記(log/reports,提及個人偏好)
+agent/
+# 內部設計草稿(README 已涵蓋公開版)
+PLAN.md
+# 工作區狀態板(workspace 慣例,非工具一部分)
+PROJECT.md
+# → 指向 ~/research 工作區規則的 symlink
+AGENTS.md
+CLAUDE.md
+# 匯出的個人清單
+my_events.html
+my_events.md

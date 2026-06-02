@@ -1,0 +1,135 @@
+# Event Radar — 來源白名單
+# 平台 = 廣度;白名單(venue/organizer) = 品味。後者比任何通用平台都準。
+# Salmon 可持續往 venues/organizers 補你常看的場館/劇團/喜劇/料理/走讀帳號。
+
+# ── A 層:結構化 API(首版主力,已驗) ──
+culture_tw:
+  type: api
+  enabled: true
+  base_url: "https://cloud.culture.tw/frontsite/trans/SearchShowAction.do?method=doFindTypeJ&category={category}"
+  categories:        # 文化部類別碼
+    1: 音樂
+    2: 戲劇
+    3: 舞蹈
+    5: 獨立音樂
+    6: 展覽
+    7: 講座
+    15: 其他
+    17: 演唱會
+    19: 研習課程
+  priority: 4
+
+# ── B 層:售票/活動平台(Stage B 接,Codex parsing) ──
+platforms:
+  - source_name: KKTIX
+    type: platform
+    enabled: false
+    url: "https://kktix.com/events"
+    category_hint: "獨立音樂/喜劇/livehouse"
+    priority: 5
+    notes: "後搖/專場/open mic/單口喜劇主力。可掃主辦頁 *.kktix.cc"
+  - source_name: Accupass
+    type: platform
+    enabled: false
+    url: "https://www.accupass.com/event"
+    category_hint: "體驗/手作/料理/社區/喜劇"
+    priority: 5
+    notes: "真人圖書館/料理體驗/open mic 來源"
+  - source_name: OPENTIX
+    type: platform
+    enabled: true
+    url: "https://www.opentix.life/event"
+    category_hint: "戲劇/小劇場/讀劇/舞蹈/音樂劇"
+    priority: 5
+    notes: "正式藝文 + 兩廳院 + 畢業公演"
+  - source_name: TixFun
+    type: platform
+    enabled: false
+    url: "https://tixfun.com/"
+    category_hint: "售票"
+    priority: 2
+  - source_name: udn售票網
+    type: platform
+    enabled: false
+    url: "https://tickets.udnfunlife.com/"
+    category_hint: "售票"
+    priority: 2
+
+# ── KKTIX:走主辦子網域 <slug>.kktix.cc/events.json(主站被 Cloudflare 擋) ──
+# Salmon 給「主辦/場館名稱」,Claude 對應 slug 填這裡。慢慢加。
+kktix:
+  enabled: true
+  organizers:
+    - { slug: thewall,      name: "The Wall 這牆音樂",  hint: "獨立音樂/livehouse" }   # 種子(目前 feed 較舊)
+    - { slug: thewallmusic, name: "這牆音樂 THE WALL",   hint: "獨立音樂/後搖" }
+    - { slug: spaceport,    name: "蓋婭娛樂 SPACEPORT", hint: "國際/獨立/嘻哈專場;HONNE 等" }  # 2026-05 加(HONNE 10週年)
+    # 待 Salmon 補:你常看的 livehouse / 喜劇品牌 / 後搖團主辦,例如
+    # - { slug: <實際slug>, name: "Legacy Taipei", hint: "獨立音樂" }
+
+# ── iNDIEVOX:獨立音樂售票平台(後搖/獨立/livehouse/發片專場主場) ──
+# /activity 列表 SSR,robots 允許。自動發現,不需名單。
+indievox:
+  enabled: true
+
+# ── 拓元 tixcraft:國際演唱會/世貿大型展/大型音樂活動。/activity SSR,自動發現。──
+tixcraft:
+  enabled: true
+
+# ── 年代售票:UTK 後台,列表→詳情(取演出日期非開賣日)。大型演唱會/音樂會。慢爬。──
+# 註:寬宏 kham 同後台但詳情頁是 Vue 渲染(<title>通用、無 SSR 活動內容),requests 抓不到 →
+#    暫不接(需 headless 瀏覽器才行)。年代詳情頁有 SSR,可解析。
+era_kham:
+  enabled: true
+  max_detail_per_site: 50
+  sites:
+    - { name: 年代售票, base: "https://ticket.com.tw" }
+
+# ── Accupass:自動發現(搜尋頁 SSR,/search?q=&area=north)+ inbox 貼連結 ──
+# discover=用品味關鍵字搜 → 抽 event 連結 → JSON-LD 解析。Accupass 強項=真人圖書館/
+# 街遊/市集/料理體驗/走讀 等「酷東西」。search_keywords 留空則用 collector 內建清單。
+accupass:
+  enabled: true
+  discover: true
+  per_keyword: 18
+  max_fetch: 50           # 單次最多抓幾個詳情頁(慢爬 1rps;留空品味關鍵字用內建)
+  search_keywords: []     # 空=用 _DEFAULT_KEYWORDS(真人圖書館/街遊/走讀/市集/料理體驗…)
+  seed_urls:
+    - "https://www.accupass.com/event/2405061100471497165113"   # 街遊 真人圖書館
+    - "https://www.accupass.com/event/2405191255591460492329"   # 音樂喜劇 Open Mic 怡岑
+    - "https://www.accupass.com/event/2405251339326860193890"   # AG單口喜劇專場
+
+# ── Eventbrite:同方法學(列表SSR發現→詳情 JSON-LD)。偏國際/外語/社群活動,補其他來源。──
+eventbrite:
+  enabled: true
+  max_fetch: 40
+
+# ── C 層:白名單場館 / 主辦(品味核心,Salmon 補) ──
+venues: []
+  # 範例格式:
+  # - source_name: The Wall
+  #   type: venue
+  #   enabled: true
+  #   url: "https://thewall.kktix.cc/"
+  #   category_hint: "獨立音樂/livehouse/後搖"
+  #   priority: 5
+  #   notes: "常有後搖/獨立樂團專場"
+
+organizers: []
+  # - source_name: <喜劇品牌>
+  #   type: organizer
+  #   url: "..."
+  #   category_hint: "stand-up/open mic"
+  #   priority: 5
+
+# ── D 層:社群補漏(首版用手動 inbox + 搜尋 query,不自動爬) ──
+social:
+  facebook_ig: manual_inbox   # 看到 → 丟連結進 Streamlit inbox → 解析當種子
+  search_queries:
+    music: '("後搖" OR "post-rock" OR "獨立音樂" OR "發片" OR "專場" OR "livehouse") ("台北" OR "新北")'
+    theatre: '("小劇場" OR "實驗劇場" OR "讀劇" OR "畢業公演" OR "音樂劇" OR "外百老匯") ("台北" OR "新北")'
+    comedy: '("open mic" OR "開放麥" OR "單口喜劇" OR "stand-up" OR "即興喜劇") ("台北" OR "新北")'
+    community: '("真人圖書館" OR "社區實踐" OR "城市走讀" OR "地方創生" OR "文化行動") ("台北" OR "新北")'
+    food: '("料理體驗" OR "共食" OR "餐桌" OR "手作" OR "工作坊") ("台北" OR "新北")'
+    site_kktix: 'site:kktix.com/events 後搖 OR 專場 OR "open mic" 台北'
+    site_accupass: 'site:accupass.com/event 真人圖書館 OR 料理體驗 OR 社區實踐 台北'
+    site_opentix: 'site:opentix.life 小劇場 OR 讀劇 OR 音樂劇 台北'
