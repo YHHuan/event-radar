@@ -2,7 +2,7 @@
 
 Upstream intent: `.ake/work/taste-aware-public-radar/intent.md`
 Upstream spec: `.ake/work/taste-aware-public-radar/spec.md`
-Status: in progress
+Status: completed
 
 ## Change surface
 
