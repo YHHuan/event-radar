@@ -14,6 +14,7 @@ const state = {
   view: "for-you",
   when: "90",
   city: "all",
+  period: "all",
   lens: "all",
   query: "",
   visible: PAGE_SIZE,
@@ -105,6 +106,14 @@ function matchesCity(event) {
   return event.city === state.city;
 }
 
+function matchesPeriod(event) {
+  if (state.period === "all") return true;
+  const time = String(event.firstStart || "").slice(11, 16);
+  if (!/^\d{2}:\d{2}$/.test(time) || time === "00:00") return false;
+  const hour = Number(time.slice(0, 2));
+  return state.period === "day" ? hour < 18 : hour >= 18;
+}
+
 function filteredEvents() {
   const query = state.query.trim().toLocaleLowerCase("zh-Hant");
   const [weekendStart, weekendEnd] = weekendBounds();
@@ -116,6 +125,7 @@ function filteredEvents() {
     if (state.view === "weekend" && (days < weekendStart || days > weekendEnd)) return false;
     if (state.when !== "all" && days > Number(state.when)) return false;
     if (!matchesCity(event)) return false;
+    if (!matchesPeriod(event)) return false;
     if (state.lens !== "all" && !(event.lenses || []).some((lens) => lens.key === state.lens)) return false;
     return !query || queryBlob(event).includes(query);
   });
@@ -132,6 +142,7 @@ function makeCard(event) {
   const card = document.createElement("article");
   card.className = "event-card";
   card.dataset.id = event.id;
+  card.dataset.start = event.firstStart || "";
 
   const poster = document.createElement("a");
   poster.className = "event-card__poster";
@@ -245,10 +256,14 @@ function updateControls() {
   document.querySelectorAll("#city-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.city));
   });
+  document.querySelectorAll("#period-filters button").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.value === state.period));
+  });
   document.querySelectorAll("#lens-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.lens));
   });
-  const active = Number(state.when !== "90") + Number(state.city !== "all") + Number(state.lens !== "all");
+  const active = Number(state.when !== "90") + Number(state.city !== "all")
+    + Number(state.period !== "all") + Number(state.lens !== "all");
   el("filter-count").hidden = active === 0;
   el("filter-count").textContent = String(active);
   el("restore-hidden").hidden = state.hidden.size === 0;
@@ -259,6 +274,7 @@ function syncUrl() {
   if (state.view !== "for-you") params.set("view", state.view);
   if (state.when !== "90") params.set("when", state.when);
   if (state.city !== "all") params.set("city", state.city);
+  if (state.period !== "all") params.set("period", state.period);
   if (state.lens !== "all") params.set("lens", state.lens);
   if (state.query) params.set("q", state.query);
   const next = `${location.pathname}${params.size ? `?${params}` : ""}`;
@@ -272,6 +288,8 @@ function loadUrlState() {
   const when = params.get("when");
   if (["7", "30", "90", "all"].includes(when)) state.when = when;
   if (params.get("city")) state.city = params.get("city");
+  const period = params.get("period");
+  if (["day", "evening"].includes(period)) state.period = period;
   if (params.get("lens")) state.lens = params.get("lens");
   state.query = params.get("q") || "";
   el("search").value = state.query;
@@ -302,6 +320,7 @@ function resetFilters() {
   state.view = "for-you";
   state.when = "90";
   state.city = "all";
+  state.period = "all";
   state.lens = "all";
   state.query = "";
   state.visible = PAGE_SIZE;
@@ -355,7 +374,7 @@ function bindEvents() {
     el("filters").hidden = !open;
     el("toggle-filters").setAttribute("aria-expanded", String(open));
   });
-  [["when-filters", "when"], ["city-filters", "city"], ["lens-filters", "lens"]].forEach(([id, key]) => {
+  [["when-filters", "when"], ["city-filters", "city"], ["period-filters", "period"], ["lens-filters", "lens"]].forEach(([id, key]) => {
     el(id).addEventListener("click", (event) => {
       const button = event.target.closest("button[data-value]");
       if (!button) return;

@@ -8,7 +8,7 @@ Status: accepted for implementation
 - Public URL: `https://yhhuan.github.io/event-radar/`.
 - Default view prioritizes upcoming strong matches without hiding exploration candidates.
 - Search covers event title, venue, organizer, city, source, facet and recommendation reason.
-- Filters cover time window, location and experiential lens; state is shareable in the URL.
+- Filters cover date window, daytime/evening period, location and experiential lens; state is shareable in the URL.
 - Save and hide actions persist in browser `localStorage`; hidden items can be restored.
 - Each result shows date, location, concise fit reason, public source and an outbound details link.
 
@@ -32,6 +32,12 @@ Status: accepted for implementation
 - Named approver: Yen-Hsun Huang.
 - Gate decision: approved in the 2026-08-30 request to deploy the improved event radar to GitHub and link it from Telegram.
 - GitHub Actions may refresh public event data on a schedule without paid API use.
+
+## Telegram intake
+
+- `/events` returns the public browser URL.
+- `/event <public URL> [note]` writes typed data to the existing local inbox; it never executes message text.
+- Supported sources may appear after the next collection. Unknown sources remain queued for bounded review rather than being claimed as parsed.
 
 ## Rollback and retirement
 

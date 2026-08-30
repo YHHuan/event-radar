@@ -11,6 +11,8 @@ Terminal state: succeeded
 - Published the mobile-first `有空` browser with search, shareable filters, saved/hidden local state, outbound provenance and ICS export.
 - Updated Telegram to select across series and experiential lenses, show reasons instead of raw scores, and link to the full browser.
 - Added a daily GitHub Pages refresh with health gates, tests and no paid model API.
+- Added shareable daytime/evening filtering without guessing a period for date-only events.
+- Added Telegram `/events` and `/event <URL> [note]` entry points backed by the local typed inbox.
 
 ## Deviations
 
@@ -22,7 +24,7 @@ Terminal state: succeeded
 
 - `PYTHONPATH=code .venv/bin/python -m unittest tests.test_taste tests.test_site -v`: 9/9 passed.
 - `npm run build && npm run check`: local snapshot 394 events from nine sources through 2026-12-28.
-- `npm run smoke`: mobile and desktop search, URL state, save, hide/restore, ICS and overflow checks passed.
+- `npm run smoke`: mobile and desktop search, daytime/evening URL state, save, hide/restore, ICS and overflow checks passed.
 - `daily-event-recommend --dry-run`: current taste-v3 reasons, four diversified picks and the public browser link verified without paid scoring.
 - GitHub Actions run `33305162325`: collection, unit tests, build health, browser smoke and Pages deployment all succeeded.
 - External read-back on 2026-08-30: homepage HTTP 200; deployed snapshot 462 events from seven sources through 2026-12-28.
