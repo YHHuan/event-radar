@@ -29,6 +29,8 @@ Terminal state: succeeded
 - GitHub Actions run `33305162325`: collection, unit tests, build health, browser smoke and Pages deployment all succeeded.
 - External read-back on 2026-08-30: homepage HTTP 200; deployed snapshot 462 events from seven sources through 2026-12-28.
 - External Playwright: 390x844 and 1440x1000 both returned 18 initial cards with zero horizontal overflow; `台北蚤之市` search returned one result.
+- Follow-up GitHub Actions run `33310192548`: period-filter browser smoke and Pages deployment succeeded; live read-back contains the `period-filters` control and `matchesPeriod` logic.
+- Follow-up live snapshot: 464 events from seven sources, generated 2026-08-30 20:02 Asia/Taipei, through 2026-12-28.
 
 ## Artifacts
 
@@ -36,6 +38,8 @@ Terminal state: succeeded
 - Event Radar implementation commit: `e7b83a0f73de796b796fd9ed217bff8a9b447e86`
 - Telegram integration commit: `578d88a` in private `YHHuan/machine-setup`
 - GitHub Actions run: `https://github.com/YHHuan/event-radar/actions/runs/33305162325`
+- Period-filter implementation commit: `19df74efba4310a75cf54b589bff76b2acb93fb0`
+- Follow-up GitHub Actions run: `https://github.com/YHHuan/event-radar/actions/runs/33310192548`
 - Authoritative work record: this directory
 
 ## Remaining limits
