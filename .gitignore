@@ -5,6 +5,8 @@ data/
 
 # python
 .venv/
+node_modules/
+_site/
 __pycache__/
 *.pyc
 .pytest_cache/

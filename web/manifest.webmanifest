@@ -1,0 +1,10 @@
+{
+  "name": "有空｜活動雷達",
+  "short_name": "有空",
+  "description": "依現場感、策展脈絡與城市體驗整理的活動雷達",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f8f5",
+  "theme_color": "#f7f8f5",
+  "lang": "zh-Hant"
+}

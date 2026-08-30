@@ -1,0 +1,124 @@
+# Event Radar taste model
+#
+# Categories answer "what is it?". Facets answer "why is it worth leaving home?".
+# Facets are scored at most once each so verbose listings cannot inflate relevance.
+
+revision: "2026-08-30-v3"
+model_score_max_age_days: 21
+primary_cities: ["台北市", "新北市"]
+nearby_cities: ["桃園市", "基隆市"]
+destination_cities: ["台中市", "新竹市", "宜蘭縣"]
+
+observed_examples:
+  - title: "台北蚤之市"
+    signals: [wander, place, limited, scene]
+    note: "不是泛市集；是老物文化、城市場域與偶遇感。"
+  - title: "驫舞20《大群舞》"
+    signals: [embodied, live, curated, limited]
+    note: "當代舞、現場演奏與二十周年脈絡。"
+  - title: "2026臺北爵士音樂節"
+    signals: [live, curated, place, scene]
+    note: "整座城市、多場域與音樂節脈絡。"
+  - title: "文化空總 晴空祭"
+    signals: [place, curated, wander]
+    note: "場域本身和節目同樣重要。"
+  - title: "《人間樂園》"
+    signals: [embodied, curated, limited]
+    note: "有明確創作觀點、跨戲劇音樂肢體與大型裝置。"
+  - title: "SoulFa 靈魂沙發《失望的山》"
+    signals: [live, scene, limited]
+    note: "有個性的樂團專場，不是泛大型演唱會。"
+  - title: "JAM JAM ASIA"
+    signals: [live, curated, wander, scene]
+    note: "多舞台、跨國場景與可自由探索的節慶。"
+  - title: "狂舞影展"
+    signals: [curated, embodied, scene]
+    note: "主題影展加映後交流，而非單一商業片。"
+  - title: "台北城市狩獵"
+    signals: [nature, place, participatory]
+    note: "成人夜間生態觀察、實際進入城市自然。"
+  - title: "雲門戶外公演"
+    signals: [embodied, live, place, limited]
+    note: "戶外場域和集體現場感。"
+
+lenses:
+  live_music:
+    label: "音樂現場"
+    keywords: ["演唱會", "音樂會", "音樂節", "live", "livehouse", "live house", "樂團", "巡演", "專場", "發片", "爵士", "jazz", "dj", "搖滾", "後搖", "indie", "嘻哈", "演奏"]
+  theatre_dance:
+    label: "劇場舞蹈"
+    keywords: ["戲劇", "劇場", "舞台劇", "音樂劇", "舞蹈", "舞作", "編舞", "讀劇", "表演藝術", "公演", "馬戲"]
+  film:
+    label: "影展放映"
+    keywords: ["影展", "電影節", "放映", "映後", "紀錄片", "數位修復", "4k修復", "選片", "電影"]
+  market_festival:
+    label: "市集節慶"
+    keywords: ["蚤之市", "跳蚤市場", "古物", "古著", "老物", "市集", "祭", "嘉年華", "節慶", "博覽會", "展售"]
+  exhibition:
+    label: "展覽美術"
+    keywords: ["展覽", "美術館", "博物館", "藝術展", "特展", "雙年展", "回顧展", "裝置藝術", "攝影展", "創作展"]
+  nature:
+    label: "自然夜觀"
+    keywords: ["夜間生態", "生態觀察", "生態體驗", "夜觀", "賞蛙", "賞蛇", "蜘蛛", "飛鼠", "步道", "自然觀察", "地質"]
+  urban:
+    label: "走讀體驗"
+    keywords: ["走讀", "街遊", "城市導覽", "在地導覽", "田野", "地方創生", "實境", "沉浸", "工作坊", "共食", "料理體驗"]
+  talks:
+    label: "講座對談"
+    keywords: ["講座", "座談", "論壇", "對談", "講堂", "分享會"]
+
+facets:
+  live:
+    label: "現場感"
+    weight: 13
+    keywords: ["現場演奏", "現場演出", "live", "演唱會", "音樂會", "公演", "專場", "巡演", "戶外公演", "open mic", "即興"]
+  embodied:
+    label: "身體與感官"
+    weight: 12
+    keywords: ["舞蹈", "舞作", "編舞", "肢體", "馬戲", "沉浸", "聲響", "裝置", "實驗劇場", "跨域"]
+  curated:
+    label: "策展脈絡"
+    weight: 14
+    keywords: ["策展", "藝術節", "音樂節", "影展", "電影節", "回顧展", "主題展", "選片", "映後座談", "單元", "策畫", "curated", "festival"]
+  place:
+    label: "場域成為體驗"
+    weight: 11
+    keywords: ["華山", "松山文創", "松菸", "文化空總", "空總", "北投中心新村", "戶外", "美術館", "博物館", "倉庫", "園區", "街區", "城市", "大稻埕", "北流", "臺北流行音樂中心", "台北流行音樂中心"]
+  limited:
+    label: "限定與此刻"
+    weight: 10
+    keywords: ["限定", "週年", "周年", "首演", "世界首演", "台灣首演", "臺灣首演", "特別場", "唯一一場", "最終場", "巡演", "紀念", "重返", "再度啟程"]
+  scene:
+    label: "場景文化"
+    weight: 11
+    keywords: ["獨立音樂", "indie", "livehouse", "live house", "後搖", "爵士", "jazz", "嘻哈", "dj", "古物", "古著", "老物", "黑膠", "次文化", "實驗性", "小劇場"]
+  wander:
+    label: "可逛可偶遇"
+    weight: 9
+    keywords: ["蚤之市", "跳蚤", "老物", "古物", "古著", "市集", "多舞台", "多場域", "園遊", "自由入場", "開放工作室", "open house"]
+  nature:
+    label: "城市自然"
+    weight: 14
+    keywords: ["夜間生態", "生態觀察", "生態體驗", "夜觀", "賞蛙", "賞蛇", "蜘蛛觀察", "飛鼠觀察", "昆蟲觀察", "自然觀察"]
+  participatory:
+    label: "親自參與"
+    weight: 9
+    keywords: ["走讀", "街遊", "工作坊", "共食", "料理體驗", "實境", "互動", "觀察行程", "田野"]
+
+signature_phrases:
+  - "台北蚤之市"
+  - "大群舞"
+  - "台北爵士音樂節"
+  - "臺北爵士音樂節"
+  - "晴空祭"
+  - "人間樂園"
+  - "靈魂沙發"
+  - "失望的山"
+  - "jam jam asia"
+  - "狂舞影展"
+  - "奧斯陸三部曲"
+  - "andr"
+  - "雲門戶外公演"
+
+generic_only_keywords: ["活動", "體驗", "公演", "展演", "市集", "講座", "工作坊", "音樂會"]
+recurring_course_keywords: ["每週", "每月", "常態班", "基礎班", "入門班", "招生中", "預約專班", "課程規劃"]

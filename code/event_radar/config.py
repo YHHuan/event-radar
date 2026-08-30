@@ -14,7 +14,7 @@ DATA_DIR = Path(os.environ.get("EVENT_RADAR_DATA", PROJECT_ROOT / "data"))
 DB_PATH = Path(os.environ.get("EVENT_RADAR_DB", DATA_DIR / "events.db"))
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=None)
 def load_yaml(name: str) -> dict:
     path = CONFIG_DIR / name
     with open(path, encoding="utf-8") as f:
@@ -27,3 +27,7 @@ def profile() -> dict:
 
 def sources() -> dict:
     return load_yaml("sources.yaml")
+
+
+def taste() -> dict:
+    return load_yaml("taste.yaml")

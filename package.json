@@ -1,0 +1,15 @@
+{
+  "name": "ake-event-radar-site",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Static browser and smoke tests for A-Ke Event Radar",
+  "scripts": {
+    "build": "PYTHONPATH=code .venv/bin/python -m event_radar.site build",
+    "check": "PYTHONPATH=code .venv/bin/python -m event_radar.site check",
+    "smoke": "node tests/site-smoke.mjs"
+  },
+  "devDependencies": {
+    "lucide-static": "1.37.0",
+    "playwright": "1.62.1"
+  }
+}

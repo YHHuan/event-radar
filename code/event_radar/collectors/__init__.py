@@ -1,6 +1,7 @@
 """各來源 collector。每個獨立、fail-soft,回傳 raw event dict list。"""
 from .accupass import collect as accupass_collect
 from .culture_tw import collect as culture_tw_collect
+from .curated import collect as curated_collect
 from .era_kham import collect as era_kham_collect
 from .eventbrite import collect as eventbrite_collect
 from .indievox import collect as indievox_collect
@@ -9,6 +10,7 @@ from .opentix import collect as opentix_collect
 from .tixcraft import collect as tixcraft_collect
 
 COLLECTORS = {
+    "curated": curated_collect,
     "culture_tw": culture_tw_collect,
     "opentix": opentix_collect,
     "kktix": kktix_collect,

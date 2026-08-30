@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8f5">
+  <meta name="description" content="從公開藝文來源整理、依現場感與策展脈絡排序的個人活動雷達。">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+  <title>有空｜活動雷達</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead__inner">
+      <a class="brand" href="./" aria-label="有空活動雷達首頁">
+        <span class="brand__mark" aria-hidden="true">有空</span>
+        <span class="brand__copy">活動雷達</span>
+      </a>
+      <p class="freshness" id="freshness">正在讀取活動</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">A-KE CITY PICKS</p>
+        <h1 id="page-title">把值得出門的事<br>放在前面。</h1>
+      </div>
+      <div class="intro__summary" aria-live="polite">
+        <strong id="pick-count">--</strong>
+        <span>個近期精選</span>
+        <small id="coverage">公開來源整理</small>
+      </div>
+    </section>
+
+    <section class="tools" aria-label="活動查詢">
+      <div class="searchbox">
+        <img src="icons/search.svg" alt="" aria-hidden="true">
+        <label class="sr-only" for="search">搜尋活動、場地或城市</label>
+        <input id="search" type="search" autocomplete="off" placeholder="搜尋活動、場地或城市">
+        <button class="icon-button searchbox__clear" id="clear-search" type="button" aria-label="清除搜尋" title="清除搜尋" hidden>
+          <img src="icons/x.svg" alt="" aria-hidden="true">
+        </button>
+      </div>
+
+      <div class="viewbar">
+        <div class="segmented" id="views" aria-label="檢視方式">
+          <button type="button" data-view="for-you" aria-pressed="true">為你</button>
+          <button type="button" data-view="weekend" aria-pressed="false">週末</button>
+          <button type="button" data-view="all" aria-pressed="false">全部</button>
+          <button type="button" data-view="saved" aria-pressed="false">收藏</button>
+        </div>
+        <button class="filter-button" id="toggle-filters" type="button" aria-expanded="false" aria-controls="filters">
+          <img src="icons/sliders-horizontal.svg" alt="" aria-hidden="true">
+          <span>篩選</span><span class="filter-count" id="filter-count" hidden>0</span>
+        </button>
+      </div>
+
+      <div class="filters" id="filters" hidden>
+        <div class="filter-group">
+          <p>時間</p>
+          <div class="chips" id="when-filters">
+            <button type="button" data-value="90" aria-pressed="true">90 天</button>
+            <button type="button" data-value="7" aria-pressed="false">7 天</button>
+            <button type="button" data-value="30" aria-pressed="false">30 天</button>
+            <button type="button" data-value="all" aria-pressed="false">全部</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <p>地區</p>
+          <div class="chips" id="city-filters">
+            <button type="button" data-value="all" aria-pressed="true">全台</button>
+            <button type="button" data-value="north" aria-pressed="false">雙北</button>
+            <button type="button" data-value="nearby" aria-pressed="false">近郊</button>
+            <button type="button" data-value="台中市" aria-pressed="false">台中</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <p>想要的體驗</p>
+          <div class="chips chips--wrap" id="lens-filters"></div>
+        </div>
+        <div class="filter-footer">
+          <button class="text-button" id="restore-hidden" type="button">
+            <img src="icons/rotate-ccw.svg" alt="" aria-hidden="true"><span>還原隱藏</span>
+          </button>
+          <button class="text-button" id="reset-filters" type="button">
+            <img src="icons/x.svg" alt="" aria-hidden="true"><span>清除篩選</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <div class="results__header">
+        <h2 id="results-title">近期活動</h2>
+        <p id="result-count" aria-live="polite">讀取中</p>
+      </div>
+      <div class="event-list" id="event-list" aria-live="polite"></div>
+      <div class="empty" id="empty" hidden>
+        <p>這個組合暫時沒有活動。</p>
+        <button class="text-button" id="empty-reset" type="button">
+          <img src="icons/rotate-ccw.svg" alt="" aria-hidden="true"><span>回到全部活動</span>
+        </button>
+      </div>
+      <button class="load-more" id="load-more" type="button" hidden>顯示更多</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>活動時間、票價與剩餘名額以主辦頁面為準。</p>
+    <a href="https://github.com/YHHuan/event-radar" target="_blank" rel="noopener noreferrer">資料與方法</a>
+  </footer>
+</body>
+</html>
