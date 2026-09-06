@@ -110,7 +110,65 @@ try {
   await mobile.locator('#restore-hidden').click();
   if (!(await mobile.locator(`.event-card[data-id="${savedId}"]`).count())) throw new Error('restore hidden failed');
 
+  await mobile.evaluate(() => {
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async (payload) => { window.__favoriteShare = payload; },
+    });
+  });
+  await mobile.locator('#share-saved').click();
+  const sharedUrl = await mobile.evaluate(() => window.__favoriteShare?.url);
+  if (!sharedUrl || !new URL(sharedUrl).searchParams.get('favorites')?.includes(savedId)) {
+    throw new Error('favorites share link did not contain the saved event');
+  }
+
   await mobile.close();
+
+  const imported = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const importedUrl = new URL(sharedUrl);
+  importedUrl.protocol = 'http:';
+  importedUrl.hostname = '127.0.0.1';
+  importedUrl.port = String(server.address().port);
+  await imported.goto(importedUrl.toString(), { waitUntil: 'networkidle' });
+  if (await imported.locator('.event-card').count() !== 1) throw new Error('shared favorites did not import in a fresh browser');
+  if (await imported.locator('.event-card').first().getAttribute('data-id') !== savedId) {
+    throw new Error('shared favorites imported the wrong event');
+  }
+  if ((await imported.locator('#saved-count').textContent()) !== '1') throw new Error('saved count did not update after import');
+  await imported.close();
+
+  const legacy = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await legacy.goto(base, { waitUntil: 'networkidle' });
+  await legacy.evaluate((id) => {
+    localStorage.clear();
+    localStorage.setItem('ake-event-radar:saved:v1', JSON.stringify([id]));
+  }, savedId);
+  await legacy.reload({ waitUntil: 'networkidle' });
+  const migrated = await legacy.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2') || '{}'));
+  if (migrated.schema !== 'ake-event-radar-saved/v2' || migrated.items?.[0]?.id !== savedId) {
+    throw new Error('v1 favorite did not migrate to a durable record');
+  }
+  await legacy.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem('ake-event-radar:saved:v2'));
+    saved.items[0].id = `retired-${saved.items[0].id}`;
+    localStorage.setItem('ake-event-radar:saved:v2', JSON.stringify(saved));
+  });
+  await legacy.reload({ waitUntil: 'networkidle' });
+  const reconciled = await legacy.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2')));
+  if (reconciled.items?.[0]?.id !== savedId) throw new Error('changed event ID did not reconcile from its saved identity');
+  await legacy.close();
+
+  const denied = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await denied.addInitScript(() => {
+    Storage.prototype.setItem = () => { throw new DOMException('denied', 'SecurityError'); };
+  });
+  await denied.goto(base, { waitUntil: 'networkidle' });
+  const deniedSave = denied.locator('button[data-action="save"]').first();
+  await deniedSave.click();
+  if (await deniedSave.getAttribute('aria-pressed') !== 'false') throw new Error('failed write left a false saved state');
+  if ((await denied.locator('#save-status').getAttribute('data-kind')) !== 'error') throw new Error('failed write was not reported');
+  await denied.close();
+
   const desktop = await checkViewport(1440, 1000, 'home-desktop');
   await desktop.close();
 

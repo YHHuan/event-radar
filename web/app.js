@@ -1,11 +1,15 @@
 "use strict";
 
 const STORAGE = {
-  saved: "ake-event-radar:saved:v1",
+  saved: "ake-event-radar:saved:v2",
+  savedV1: "ake-event-radar:saved:v1",
   hidden: "ake-event-radar:hidden:v1",
 };
 const PAGE_SIZE = 18;
+const MAX_SAVED = 200;
 const LENS_ORDER = ["live_music", "theatre_dance", "film", "market_festival", "exhibition", "nature", "urban", "talks"];
+
+const initialSaved = readSavedRecords();
 
 const state = {
   events: [],
@@ -18,12 +22,30 @@ const state = {
   lens: "all",
   query: "",
   visible: PAGE_SIZE,
-  saved: readSet(STORAGE.saved),
+  saved: initialSaved.items,
+  legacySaved: initialSaved.exists ? new Set() : readSet(STORAGE.savedV1),
+  pendingSavedIds: [],
   hidden: readSet(STORAGE.hidden),
 };
 
 const el = (id) => document.getElementById(id);
 const list = el("event-list");
+let statusTimer = null;
+
+function readSavedRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE.saved);
+    if (raw === null) return { exists: false, items: new Map() };
+    const value = JSON.parse(raw);
+    const items = Array.isArray(value?.items) ? value.items : [];
+    return {
+      exists: true,
+      items: new Map(items.filter((item) => item && typeof item.id === "string").map((item) => [item.id, item])),
+    };
+  } catch {
+    return { exists: false, items: new Map() };
+  }
+}
 
 function readSet(key) {
   try {
@@ -35,7 +57,143 @@ function readSet(key) {
 }
 
 function writeSet(key, value) {
-  localStorage.setItem(key, JSON.stringify([...value]));
+  try {
+    localStorage.setItem(key, JSON.stringify([...value]));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function writeSaved(value) {
+  while (value.size > MAX_SAVED) value.delete(value.keys().next().value);
+  const items = [...value.values()];
+  try {
+    localStorage.setItem(STORAGE.saved, JSON.stringify({
+      schema: "ake-event-radar-saved/v2",
+      items,
+    }));
+  } catch {
+    return false;
+  }
+  // Keep the old ID-only representation as a rollback bridge.
+  writeSet(STORAGE.savedV1, new Set(items.map((item) => item.id)));
+  return true;
+}
+
+function announce(message, kind = "ok") {
+  const status = el("save-status");
+  if (!status) return;
+  clearTimeout(statusTimer);
+  status.textContent = message;
+  status.dataset.kind = kind;
+  status.hidden = false;
+  statusTimer = setTimeout(() => { status.hidden = true; }, 4200);
+}
+
+function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
+  return {
+    id: event.id,
+    title: event.title || "已收藏活動",
+    organizer: event.organizer || "",
+    category: event.category || "活動",
+    city: event.city || "地點待確認",
+    source: event.source || "公開來源",
+    url: event.url || "",
+    image: event.image || "",
+    firstStart: event.firstStart || "",
+    lastStart: event.lastStart || event.firstStart || "",
+    venue: event.venue || "",
+    price: event.price || "",
+    performances: Array.isArray(event.performances) ? event.performances.slice(0, 1) : [],
+    performanceCount: event.performanceCount || 1,
+    score: event.score || 0,
+    scoreMode: event.scoreMode || "saved",
+    tier: event.tier || "explore",
+    reason: event.reason || "先前收藏",
+    facets: Array.isArray(event.facets) ? event.facets.slice(0, 4) : [],
+    lenses: Array.isArray(event.lenses) ? event.lenses.slice(0, 3) : [],
+    confidence: event.confidence || "",
+    tags: Array.isArray(event.tags) ? event.tags.slice(0, 8) : [],
+    savedAt,
+  };
+}
+
+function canonicalUrl(value) {
+  try {
+    const url = new URL(value);
+    ["fbclid", "gclid", "utm_campaign", "utm_content", "utm_id", "utm_medium", "utm_source", "utm_term"]
+      .forEach((key) => url.searchParams.delete(key));
+    url.hash = "";
+    url.pathname = url.pathname.replace(/\/$/, "") || "/";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function identityText(value) {
+  return String(value || "").normalize("NFKC").replace(/臺/g, "台").toLocaleLowerCase("zh-Hant")
+    .replace(/[\s\-–—_·,，。、!！?？:：()（）【】\[\]「」『』~～"'’“”/／|｜.]+/g, "");
+}
+
+function dayDistance(left, right) {
+  const a = localDate(left);
+  const b = localDate(right);
+  return a && b ? Math.abs(Math.round((a - b) / 86400000)) : 9999;
+}
+
+function findCurrentFavorite(record, events) {
+  const exact = events.find((event) => event.id === record.id);
+  if (exact) return exact;
+  const savedUrl = canonicalUrl(record.url);
+  if (savedUrl) {
+    const byUrl = events.find((event) => canonicalUrl(event.url) === savedUrl);
+    if (byUrl) return byUrl;
+  }
+  const title = identityText(record.title);
+  const city = identityText(record.city);
+  if (!title) return null;
+  return events.find((event) => identityText(event.title) === title
+    && identityText(event.city) === city
+    && dayDistance(event.firstStart, record.firstStart) <= 120) || null;
+}
+
+function reconcileSaved(events) {
+  const reconciled = new Map();
+  state.saved.forEach((record) => {
+    const current = findCurrentFavorite(record, events);
+    if (current) {
+      reconciled.set(current.id, favoriteSnapshot(current, record.savedAt));
+    } else {
+      reconciled.set(record.id, record);
+    }
+  });
+  state.legacySaved.forEach((id) => {
+    const current = events.find((event) => event.id === id);
+    if (current) reconciled.set(current.id, favoriteSnapshot(current));
+  });
+  return reconciled;
+}
+
+function importSharedFavorites(events) {
+  if (!state.pendingSavedIds.length) return 0;
+  const next = new Map(state.saved);
+  let imported = 0;
+  state.pendingSavedIds.forEach((id) => {
+    const current = events.find((event) => event.id === id);
+    if (current && !next.has(current.id)) {
+      next.set(current.id, favoriteSnapshot(current));
+      imported += 1;
+    }
+  });
+  if (!imported) return 0;
+  if (!writeSaved(next)) {
+    announce("收藏沒有匯入，請確認瀏覽器允許網站儲存", "error");
+    return 0;
+  }
+  state.saved = next;
+  return imported;
 }
 
 function icon(name) {
@@ -117,7 +275,13 @@ function matchesPeriod(event) {
 function filteredEvents() {
   const query = state.query.trim().toLocaleLowerCase("zh-Hant");
   const [weekendStart, weekendEnd] = weekendBounds();
-  const result = state.events.filter((event) => {
+  const candidates = state.view === "saved"
+    ? [...new Map([
+      ...[...state.saved.values()].filter((event) => event.title && event.url).map((event) => [event.id, event]),
+      ...state.events.map((event) => [event.id, event]),
+    ]).values()]
+    : state.events;
+  const result = candidates.filter((event) => {
     if (state.hidden.has(event.id)) return false;
     if (state.view === "saved" && !state.saved.has(event.id)) return false;
     if (state.view === "for-you" && !["pick", "strong"].includes(event.tier)) return false;
@@ -267,6 +431,9 @@ function updateControls() {
   el("filter-count").hidden = active === 0;
   el("filter-count").textContent = String(active);
   el("restore-hidden").hidden = state.hidden.size === 0;
+  el("saved-count").hidden = state.saved.size === 0;
+  el("saved-count").textContent = String(state.saved.size);
+  el("share-saved").hidden = state.saved.size === 0;
 }
 
 function syncUrl() {
@@ -292,7 +459,33 @@ function loadUrlState() {
   if (["day", "evening"].includes(period)) state.period = period;
   if (params.get("lens")) state.lens = params.get("lens");
   state.query = params.get("q") || "";
+  state.pendingSavedIds = (params.get("favorites") || "").split(".")
+    .filter((value) => /^[a-zA-Z0-9_-]{1,80}$/.test(value)).slice(0, MAX_SAVED);
+  if (state.pendingSavedIds.length) {
+    state.view = "saved";
+    state.when = "all";
+  }
   el("search").value = state.query;
+}
+
+async function shareSaved() {
+  const ids = [...state.saved.keys()];
+  if (!ids.length) return;
+  const url = new URL(location.origin + location.pathname);
+  url.searchParams.set("view", "saved");
+  url.searchParams.set("when", "all");
+  url.searchParams.set("favorites", ids.join("."));
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: "有空｜我的收藏", url: url.toString() });
+      announce("收藏連結已分享");
+    } else {
+      await navigator.clipboard.writeText(url.toString());
+      announce("收藏連結已複製");
+    }
+  } catch (error) {
+    if (error?.name !== "AbortError") announce("無法分享收藏連結", "error");
+  }
 }
 
 function buildLensFilters(events) {
@@ -386,10 +579,15 @@ function bindEvents() {
   el("reset-filters").addEventListener("click", resetFilters);
   el("empty-reset").addEventListener("click", resetFilters);
   el("restore-hidden").addEventListener("click", () => {
-    state.hidden.clear();
-    writeSet(STORAGE.hidden, state.hidden);
+    const next = new Set();
+    if (!writeSet(STORAGE.hidden, next)) {
+      announce("瀏覽器未允許儲存變更", "error");
+      return;
+    }
+    state.hidden = next;
     render();
   });
+  el("share-saved").addEventListener("click", shareSaved);
   el("load-more").addEventListener("click", () => {
     state.visible += PAGE_SIZE;
     render();
@@ -398,15 +596,31 @@ function bindEvents() {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
     const card = button.closest(".event-card");
-    const item = state.events.find((candidate) => candidate.id === card?.dataset.id);
+    const item = state.events.find((candidate) => candidate.id === card?.dataset.id)
+      || state.saved.get(card?.dataset.id);
     if (!item) return;
     if (button.dataset.action === "save") {
-      state.saved.has(item.id) ? state.saved.delete(item.id) : state.saved.add(item.id);
-      writeSet(STORAGE.saved, state.saved);
+      const next = new Map(state.saved);
+      const removing = next.has(item.id);
+      if (removing) next.delete(item.id);
+      else {
+        if (next.size >= MAX_SAVED) next.delete(next.keys().next().value);
+        next.set(item.id, favoriteSnapshot(item));
+      }
+      if (!writeSaved(next)) {
+        announce("收藏沒有寫入，請確認瀏覽器允許網站儲存", "error");
+        return;
+      }
+      state.saved = next;
+      announce(removing ? "已取消收藏" : "已收藏");
       render();
     } else if (button.dataset.action === "hide") {
-      state.hidden.add(item.id);
-      writeSet(STORAGE.hidden, state.hidden);
+      const next = new Set(state.hidden).add(item.id);
+      if (!writeSet(STORAGE.hidden, next)) {
+        announce("瀏覽器未允許儲存變更", "error");
+        return;
+      }
+      state.hidden = next;
       render();
     } else if (button.dataset.action === "calendar") {
       downloadCalendar(item);
@@ -426,12 +640,19 @@ async function start() {
     state.events = Array.isArray(data.events) ? data.events : [];
     state.today = data.today;
     state.generatedAt = data.generatedAt;
+    const reconciled = reconcileSaved(state.events);
+    if (writeSaved(reconciled)) {
+      state.saved = reconciled;
+      state.legacySaved.clear();
+    }
+    const imported = importSharedFavorites(state.events);
     buildLensFilters(state.events);
     const generated = new Date(data.generatedAt);
     el("freshness").textContent = `更新 ${new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(generated)}`;
     el("pick-count").textContent = String(data.meta?.pickCount || 0);
     el("coverage").textContent = `${data.meta?.count || 0} 個候選 · ${Object.keys(data.meta?.sources || {}).length} 個來源`;
     render();
+    if (imported) announce(`已匯入 ${imported} 個收藏`);
   } catch (error) {
     console.error(error);
     el("freshness").textContent = "資料暫時無法讀取";

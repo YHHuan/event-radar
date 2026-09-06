@@ -51,7 +51,9 @@
           <button type="button" data-view="for-you" aria-pressed="true">為你</button>
           <button type="button" data-view="weekend" aria-pressed="false">週末</button>
           <button type="button" data-view="all" aria-pressed="false">全部</button>
-          <button type="button" data-view="saved" aria-pressed="false">收藏</button>
+          <button type="button" data-view="saved" aria-pressed="false">
+            <span>收藏</span><span class="saved-count" id="saved-count" hidden>0</span>
+          </button>
         </div>
         <button class="filter-button" id="toggle-filters" type="button" aria-expanded="false" aria-controls="filters">
           <img src="icons/sliders-horizontal.svg" alt="" aria-hidden="true">
@@ -104,8 +106,14 @@
     <section class="results" aria-labelledby="results-title">
       <div class="results__header">
         <h2 id="results-title">近期活動</h2>
-        <p id="result-count" aria-live="polite">讀取中</p>
+        <div class="results__actions">
+          <p id="result-count" aria-live="polite">讀取中</p>
+          <button class="text-button" id="share-saved" type="button" hidden>
+            <img src="icons/share-2.svg" alt="" aria-hidden="true"><span>分享收藏</span>
+          </button>
+        </div>
       </div>
+      <p class="status-message" id="save-status" role="status" aria-live="polite" hidden></p>
       <div class="event-list" id="event-list" aria-live="polite"></div>
       <div class="empty" id="empty" hidden>
         <p>這個組合暫時沒有活動。</p>
