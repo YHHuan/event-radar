@@ -1,7 +1,7 @@
 # Result: Durable and portable event favorites
 
 Upstream plan: `.ake/work/durable-portable-favorites/plan.md`
-Terminal state: verified locally; publication pending
+Terminal state: deployed and field-verified
 
 ## Outcome
 
@@ -24,6 +24,10 @@ Terminal state: verified locally; publication pending
   rollback.
 - Visual read-back: saved mobile view showed 10 results, `收藏 10`, share control and no
   horizontal overflow.
+- GitHub Actions run `34041440748` completed successfully for commit `fee4dfa`, including
+  production source refresh, browser smoke and Pages deployment.
+- Production read-back at `https://yhhuan.github.io/event-radar/` loaded the actual copied
+  Chrome Profile 2 state and reported `v1=10`, `v2=10`, 10 rendered results and badge 10.
 
 ## Remaining limitation
 
