@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from . import db
 from .config import PROJECT_ROOT, taste
 from .highlights import public_watchlist, selected_events
+from .schedules import reviewed_schedules, with_reviewed_schedule
 from .source_network import cached_events, managed_source_names, public_sources
 from .taste import analyze_event, blended_score, normalized_image_url
 
@@ -90,6 +91,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
     cfg = taste()
     prepared: list[dict] = []
     seen: set[tuple[str, str, str]] = set()
+    schedules = reviewed_schedules()
 
     # Reviewed corrections take precedence over feeds and historical DB rows.
     # Feed snapshots replace previous editions and expire after seven days.
@@ -113,6 +115,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                              if item.get("source_name") not in managed and not superseded(item)
                              and edition(item) not in live_editions]
     for event in candidates:
+        event = with_reviewed_schedule(event, schedules)
         selection = event.get("_selection") or {}
         event_horizon = 365 if selection else horizon_days
         analysis = analyze_event(event, today=today)
@@ -135,12 +138,17 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                     "start": start_time,
                     "end": perf.get("end_time") or "",
                     "venue": perf.get("venue_name") or "",
+                    "city": perf.get("city") or event.get("city") or "",
                     "address": perf.get("venue_address") or "",
                     "price": _price(perf.get("price_text")),
                 }
             )
         if not performances:
             continue
+        performances = sorted(
+            {tuple(perf.items()): perf for perf in performances}.values(),
+            key=lambda perf: (perf["start"], perf["end"], perf["venue"]),
+        )
 
         title = (event.get("title") or "").strip()
         city = event.get("city") or "地點待確認"
@@ -171,13 +179,13 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                 "lastEnd": max(perf["end"] or perf["start"] for perf in performances),
                 "dateOnly": len(first["start"]) == 10,
                 "ongoing": first["start"][:10] < today.isoformat(),
-                "checkedOn": selection.get("checked_on", ""),
+                "checkedOn": event.get("_schedule_checked_on") or selection.get("checked_on", ""),
                 "automatic": bool(selection.get("automatic")),
                 "sharedSourceUrl": bool(selection.get("shared_url")),
                 "registrationNote": selection.get("registration_note", ""),
                 "venue": first["venue"],
                 "price": first["price"],
-                "performances": performances[:20],
+                "performances": performances,
                 "performanceCount": len(performances),
                 "score": rank,
                 "scoreMode": rank_mode,
@@ -258,7 +266,7 @@ def build(output: Path = DEFAULT_OUTPUT) -> dict:
         "sourceNetwork": data["sourceNetwork"],
         "coverage": {
             "firstDate": min((event["firstStart"][:10] for event in data["events"]), default=""),
-            "lastDate": max((event["firstStart"][:10] for event in data["events"]), default=""),
+            "lastDate": max((event["lastEnd"][:10] for event in data["events"]), default=""),
         },
     }
     (output / "site-status.json").write_text(

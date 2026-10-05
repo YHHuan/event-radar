@@ -19,6 +19,8 @@ const state = {
   generatedAt: "",
   view: "for-you",
   when: "90",
+  dateFrom: "",
+  dateTo: "",
   city: "all",
   period: "all",
   lens: "all",
@@ -113,7 +115,7 @@ function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
     registrationNote: event.registrationNote || "",
     venue: event.venue || "",
     price: event.price || "",
-    performances: Array.isArray(event.performances) ? event.performances.slice(0, 1) : [],
+    performances: eventPerformances(event),
     performanceCount: event.performanceCount || 1,
     score: event.score || 0,
     scoreMode: event.scoreMode || "saved",
@@ -227,10 +229,11 @@ function iconButton(name, label, action, pressed = null) {
 }
 
 function localDate(value) {
-  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}/.test(value || "")) return null;
   const parts = value.slice(0, 10).split("-").map(Number);
-  if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
-  return new Date(parts[0], parts[1] - 1, parts[2]);
+  const parsed = new Date(parts[0], parts[1] - 1, parts[2]);
+  return parsed.getFullYear() === parts[0] && parsed.getMonth() === parts[1] - 1
+    && parsed.getDate() === parts[2] ? parsed : null;
 }
 
 function daysFromToday(value) {
@@ -250,13 +253,70 @@ function formatDate(value, withTime = true) {
   return withTime && time && time !== "00:00" ? `${datePart} ${time}` : datePart;
 }
 
-function eventDateLabel(event) {
-  const first = event.firstStart;
-  const end = event.lastEnd || event.lastStart || first;
+function sessionDateLabel(perf) {
+  const first = perf.start;
+  const end = perf.end || first;
   const range = first.slice(0, 10) !== end.slice(0, 10);
   const ongoing = first.slice(0, 10) < state.today && end.slice(0, 10) >= state.today;
-  if (event.performanceCount > 1) return `${formatDate(first)} 起 · 共 ${event.performanceCount} 場`;
-  return `${ongoing ? "進行中 · " : ""}${formatDate(first, !range)}${range ? ` — ${formatDate(end, false)}` : ""}`;
+  const endTime = end.slice(11, 16);
+  const suffix = range ? ` — ${formatDate(end)}`
+    : endTime && endTime !== "00:00" && end !== first ? `–${endTime}` : "";
+  return `${ongoing ? "進行中 · " : ""}${formatDate(first)}${suffix}`;
+}
+
+function eventDateLabel(event) {
+  const performances = eventPerformances(event);
+  const first = matchingPerformances(event)[0] || performances[0];
+  if (!first) return "日期待確認";
+  return performances.length > 1
+    ? `${formatDate(first.start)} · 共 ${performances.length} 場`
+    : sessionDateLabel(first);
+}
+
+function eventPerformances(event) {
+  const performances = event.performances?.length ? event.performances
+    : [{ start: event.firstStart, end: event.lastEnd, venue: event.venue, city: event.city }];
+  return performances.filter((perf) => localDate(perf.start))
+    .slice().sort((a, b) => a.start.localeCompare(b.start) || (a.venue || "").localeCompare(b.venue || ""));
+}
+
+function customDateError() {
+  if (!["date", "range"].includes(state.when)) return "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(state.dateFrom) || !localDate(state.dateFrom)) return "請選擇有效日期。";
+  if (state.when === "range") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(state.dateTo) || !localDate(state.dateTo)) return "請選擇結束日期。";
+    if (state.dateTo < state.dateFrom) return "結束日期不能早於開始日期。";
+  }
+  return "";
+}
+
+function dateWindow() {
+  let from = state.view === "saved" && state.when === "all" ? -Infinity : 0;
+  let to = state.when === "all" ? Infinity : Number(state.when);
+  if (["date", "range"].includes(state.when)) {
+    from = daysFromToday(state.dateFrom);
+    to = daysFromToday(state.when === "date" ? state.dateFrom : state.dateTo);
+  }
+  if (state.view === "weekend") {
+    const [weekendStart, weekendEnd] = weekendBounds();
+    from = Math.max(from, weekendStart);
+    to = Math.min(to, weekendEnd);
+  }
+  return [from, to];
+}
+
+function matchingPerformances(event) {
+  if (customDateError()) return [];
+  const [from, to] = dateWindow();
+  if (from > to) return [];
+  return eventPerformances(event).filter((perf) => (
+    daysFromToday(perf.start) <= to && daysFromToday(perf.end || perf.start) >= from
+    && matchesPeriod(perf) && matchesCity(perf.city || event.city)
+  ));
+}
+
+function matchingStart(event) {
+  return matchingPerformances(event)[0]?.start || event.firstStart || "";
 }
 
 function weekendBounds() {
@@ -274,19 +334,20 @@ function queryBlob(event) {
     event.title, event.organizer, event.category, event.city, event.venue, event.source,
     event.reason, ...(event.tags || []), ...(event.facets || []).map((item) => item.label),
     ...(event.lenses || []).map((item) => item.label),
+    ...eventPerformances(event).map((perf) => `${perf.venue || ""} ${perf.city || ""}`),
   ].join(" ").toLocaleLowerCase("zh-Hant");
 }
 
-function matchesCity(event) {
+function matchesCity(city) {
   if (state.city === "all") return true;
-  if (state.city === "north") return ["台北市", "新北市"].includes(event.city);
-  if (state.city === "nearby") return ["桃園市", "基隆市"].includes(event.city);
-  return event.city === state.city;
+  if (state.city === "north") return ["台北市", "新北市"].includes(city);
+  if (state.city === "nearby") return ["桃園市", "基隆市"].includes(city);
+  return city === state.city;
 }
 
-function matchesPeriod(event) {
+function matchesPeriod(perf) {
   if (state.period === "all") return true;
-  const time = String(event.firstStart || "").slice(11, 16);
+  const time = String(perf.start || "").slice(11, 16);
   if (!/^\d{2}:\d{2}$/.test(time) || time === "00:00") return false;
   const hour = Number(time.slice(0, 2));
   return state.period === "day" ? hour < 18 : hour >= 18;
@@ -294,7 +355,6 @@ function matchesPeriod(event) {
 
 function filteredEvents() {
   const query = state.query.trim().toLocaleLowerCase("zh-Hant");
-  const [weekendStart, weekendEnd] = weekendBounds();
   const candidates = state.view === "saved"
     ? [...new Map([
       ...[...state.saved.values()].filter((event) => event.title && event.url).map((event) => [event.id, event]),
@@ -305,22 +365,15 @@ function filteredEvents() {
     if (state.hidden.has(event.id)) return false;
     if (state.view === "saved" && !state.saved.has(event.id)) return false;
     if (state.view === "for-you" && !["pick", "strong"].includes(event.tier)) return false;
-    const days = daysFromToday(event.firstStart);
-    const performances = event.performances?.length ? event.performances : [{ start: event.firstStart, end: event.lastEnd }];
-    if (state.view === "weekend" && !performances.some((perf) => (
-      daysFromToday(perf.start) <= weekendEnd && daysFromToday(perf.end || perf.start) >= weekendStart
-    ))) return false;
-    if (state.when !== "all" && days > Number(state.when)) return false;
-    if (!matchesCity(event)) return false;
-    if (!matchesPeriod(event)) return false;
+    if (!matchingPerformances(event).length) return false;
     if (state.lens !== "all" && !(event.lenses || []).some((lens) => lens.key === state.lens)) return false;
     return !query || queryBlob(event).includes(query);
   });
-  if (["all", "saved", "weekend"].includes(state.view)) {
-    result.sort((a, b) => a.firstStart.localeCompare(b.firstStart) || b.score - a.score);
+  if (["all", "saved", "weekend"].includes(state.view) || ["date", "range"].includes(state.when)) {
+    result.sort((a, b) => matchingStart(a).localeCompare(matchingStart(b)) || b.score - a.score);
   } else {
     const tier = { pick: 0, strong: 1, explore: 2 };
-    result.sort((a, b) => (tier[a.tier] - tier[b.tier]) || b.score - a.score || a.firstStart.localeCompare(b.firstStart));
+    result.sort((a, b) => (tier[a.tier] - tier[b.tier]) || b.score - a.score || matchingStart(a).localeCompare(matchingStart(b)));
   }
   return result;
 }
@@ -329,7 +382,7 @@ function makeCard(event) {
   const card = document.createElement("article");
   card.className = "event-card";
   card.dataset.id = event.id;
-  card.dataset.start = event.firstStart || "";
+  card.dataset.start = matchingStart(event);
 
   const poster = document.createElement("a");
   poster.className = "event-card__poster";
@@ -384,6 +437,45 @@ function makeCard(event) {
   venue.textContent = [event.city, event.venue].filter(Boolean).join(" · ");
   body.append(venue);
 
+  const performances = eventPerformances(event);
+  const matches = matchingPerformances(event);
+  if (performances.length > 1) {
+    const sessions = document.createElement("section");
+    sessions.className = "event-sessions";
+    sessions.setAttribute("aria-label", "活動場次（依日期排序）");
+    const heading = document.createElement("p");
+    heading.className = "event-sessions__heading";
+    heading.textContent = `全部 ${performances.length} 場 · 符合篩選 ${matches.length} 場`;
+    const ordered = document.createElement("ol");
+    ordered.tabIndex = 0;
+    ordered.setAttribute("aria-label", "全部場次，可捲動查看");
+    performances.forEach((perf, index) => {
+      const row = document.createElement("li");
+      row.className = "event-session";
+      row.dataset.start = perf.start;
+      row.dataset.matches = String(matches.includes(perf));
+      const copy = document.createElement("span");
+      copy.className = "event-session__copy";
+      const time = document.createElement("time");
+      time.dateTime = perf.start;
+      time.textContent = sessionDateLabel(perf);
+      copy.append(time);
+      const note = document.createElement("small");
+      note.textContent = [
+        perf.venue !== event.venue ? perf.venue : "",
+        perf.price !== event.price ? perf.price : "",
+        matches.length !== performances.length ? (matches.includes(perf) ? "符合篩選" : "其他場次") : "",
+      ].filter(Boolean).join(" · ");
+      if (note.textContent) copy.append(note);
+      const calendar = iconButton("calendar-plus", `將 ${sessionDateLabel(perf)} 加入行事曆`, "calendar-session");
+      calendar.dataset.session = String(index);
+      row.append(copy, calendar);
+      ordered.append(row);
+    });
+    sessions.append(heading, ordered);
+    body.append(sessions);
+  }
+
   const middle = document.createElement("div");
   const reason = document.createElement("p");
   reason.className = "event-card__reason";
@@ -422,7 +514,7 @@ function makeCard(event) {
   actions.className = "event-card__actions";
   actions.append(
     iconButton("heart", "收藏活動", "save", state.saved.has(event.id)),
-    iconButton("calendar-plus", "加入行事曆", "calendar"),
+    iconButton("calendar-plus", performances.length > 1 ? `將符合篩選的 ${matches.length} 場加入行事曆` : "加入行事曆", "calendar"),
     iconButton("eye-off", "隱藏活動", "hide"),
     iconButton("external-link", "開啟主辦頁面", "open"),
   );
@@ -442,6 +534,10 @@ function render() {
   el("load-more").textContent = `再顯示 ${Math.min(PAGE_SIZE, events.length - shown.length)} 個`;
   el("clear-search").hidden = !state.query;
   el("results-title").textContent = state.when === "all" ? "活動日程" : "近期活動";
+  if (["date", "range"].includes(state.when) && !customDateError()) {
+    el("results-title").textContent = state.when === "date" ? `${formatDate(state.dateFrom, false)} 的活動`
+      : `${formatDate(state.dateFrom, false)} — ${formatDate(state.dateTo, false)}`;
+  }
   renderWatchlist();
   updateControls();
   syncUrl();
@@ -454,6 +550,16 @@ function updateControls() {
   document.querySelectorAll("#when-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.when));
   });
+  el("custom-dates").hidden = !["date", "range"].includes(state.when);
+  el("date-to-label").hidden = state.when !== "range";
+  el("date-from-label").textContent = state.when === "range" ? "開始日期" : "日期";
+  el("date-from").value = state.dateFrom;
+  el("date-to").value = state.dateTo;
+  const dateError = customDateError();
+  el("date-error").textContent = dateError;
+  el("date-error").hidden = !dateError;
+  el("date-from").setAttribute("aria-invalid", String(Boolean(dateError)));
+  el("date-to").setAttribute("aria-invalid", String(Boolean(dateError)));
   document.querySelectorAll("#city-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.city));
   });
@@ -477,6 +583,8 @@ function syncUrl() {
   const params = new URLSearchParams();
   if (state.view !== "for-you") params.set("view", state.view);
   if (state.when !== "90") params.set("when", state.when);
+  if (state.when === "date") params.set("date", state.dateFrom);
+  if (state.when === "range") { params.set("from", state.dateFrom); params.set("to", state.dateTo); }
   if (state.city !== "all") params.set("city", state.city);
   if (state.period !== "all") params.set("period", state.period);
   if (state.lens !== "all") params.set("lens", state.lens);
@@ -490,7 +598,13 @@ function loadUrlState() {
   const view = params.get("view");
   if (["for-you", "weekend", "all", "saved"].includes(view)) state.view = view;
   const when = params.get("when");
-  if (["7", "30", "90", "all"].includes(when)) state.when = when;
+  if (["7", "30", "90", "all", "date", "range"].includes(when)) state.when = when;
+  state.dateFrom = params.get("date") || params.get("from") || "";
+  state.dateTo = params.get("to") || "";
+  if (["date", "range"].includes(state.when)) {
+    el("filters").hidden = false;
+    el("toggle-filters").setAttribute("aria-expanded", "true");
+  }
   if (params.get("city")) state.city = params.get("city");
   const period = params.get("period");
   if (["day", "evening"].includes(period)) state.period = period;
@@ -549,6 +663,8 @@ function buildLensFilters(events) {
 function resetFilters() {
   state.view = "for-you";
   state.when = "90";
+  state.dateFrom = "";
+  state.dateTo = "";
   state.city = "all";
   state.period = "all";
   state.lens = "all";
@@ -558,31 +674,49 @@ function resetFilters() {
   render();
 }
 
-function downloadCalendar(event) {
-  const start = event.firstStart.replace(/[-:]/g, "").replace("T", "T").slice(0, 15);
-  const endRaw = event.performances?.[0]?.end || event.firstStart;
-  const end = endRaw.replace(/[-:]/g, "").replace("T", "T").slice(0, 15);
-  const dateOnly = event.dateOnly || event.firstStart.length === 10;
-  let dates;
-  if (dateOnly) {
-    const last = localDate(endRaw);
-    last.setDate(last.getDate() + 1); // RFC 5545 all-day DTEND is exclusive.
-    const exclusiveEnd = `${last.getFullYear()}${String(last.getMonth() + 1).padStart(2, "0")}${String(last.getDate()).padStart(2, "0")}`;
-    dates = [`DTSTART;VALUE=DATE:${start.slice(0, 8)}`, `DTEND;VALUE=DATE:${exclusiveEnd}`];
-  } else {
-    dates = [`DTSTART;TZID=Asia/Taipei:${start}`];
-    if (end > start) dates.push(`DTEND;TZID=Asia/Taipei:${end}`);
-  }
-  const escape = (value) => String(value || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+function downloadCalendar(event, performances = matchingPerformances(event)) {
+  if (!performances.length) return;
+  const escape = (value) => String(value || "").replace(/([,;\\])/g, "\\$1").replace(/\r?\n/g, "\\n");
+  const stamp = (value) => value.replace(/[-:]/g, "").slice(0, 15).padEnd(15, "0");
+  const entries = performances.flatMap((perf) => {
+    const start = perf.start;
+    const end = perf.end || start;
+    let dates;
+    if (start.length === 10) {
+      const last = localDate(end);
+      last.setDate(last.getDate() + 1); // RFC 5545 all-day DTEND is exclusive.
+      const exclusiveEnd = `${last.getFullYear()}${String(last.getMonth() + 1).padStart(2, "0")}${String(last.getDate()).padStart(2, "0")}`;
+      dates = [`DTSTART;VALUE=DATE:${start.replaceAll("-", "")}`, `DTEND;VALUE=DATE:${exclusiveEnd}`];
+    } else {
+      dates = [`DTSTART;TZID=Asia/Taipei:${stamp(start)}`];
+      if (end > start) dates.push(`DTEND;TZID=Asia/Taipei:${stamp(end)}`);
+    }
+    return [
+      "BEGIN:VEVENT", `UID:${escape(event.id)}-${encodeURIComponent(`${start}|${perf.venue || ""}`)}@ake-event-radar`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}`,
+      ...dates, `SUMMARY:${escape(event.title)}`,
+      `LOCATION:${escape([perf.city || event.city, perf.venue || event.venue].filter(Boolean).join(" "))}`,
+      `DESCRIPTION:${escape(`${event.reason} ${event.url}`)}`, `URL:${event.url}`,
+      "END:VEVENT",
+    ];
+  });
+  // Fold by UTF-8 bytes, without cutting a Chinese character in half (RFC 5545).
+  const fold = (line) => {
+    const encoder = new TextEncoder();
+    let output = "";
+    let bytes = 0;
+    for (const char of line) {
+      const size = encoder.encode(char).length;
+      if (bytes + size > 75) { output += "\r\n "; bytes = 1; }
+      output += char;
+      bytes += size;
+    }
+    return output;
+  };
   const ics = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//A-Ke//Event Radar//ZH-TW",
-    "BEGIN:VEVENT", `UID:${escape(event.id)}@ake-event-radar`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}`,
-    ...dates, `SUMMARY:${escape(event.title)}`,
-    `LOCATION:${escape([event.city, event.venue].filter(Boolean).join(" "))}`,
-    `DESCRIPTION:${escape(`${event.reason} ${event.url}`)}`, `URL:${event.url}`,
-    "END:VEVENT", "END:VCALENDAR", "",
-  ].join("\r\n");
+    ...entries, "END:VCALENDAR", "",
+  ].map(fold).join("\r\n");
   const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -683,6 +817,18 @@ function bindEvents() {
       const button = event.target.closest("button[data-value]");
       if (!button) return;
       state[key] = button.dataset.value;
+      if (key === "when" && ["date", "range"].includes(state.when)) {
+        if (!state.dateFrom) state.dateFrom = state.today;
+        if (!state.dateTo) state.dateTo = state.dateFrom;
+        if (state.view !== "saved") state.view = "all";
+      }
+      state.visible = PAGE_SIZE;
+      render();
+    });
+  });
+  [["date-from", "dateFrom"], ["date-to", "dateTo"]].forEach(([id, key]) => {
+    el(id).addEventListener("change", (event) => {
+      state[key] = event.target.value;
       state.visible = PAGE_SIZE;
       render();
     });
@@ -735,6 +881,9 @@ function bindEvents() {
       render();
     } else if (button.dataset.action === "calendar") {
       downloadCalendar(item);
+    } else if (button.dataset.action === "calendar-session") {
+      const session = eventPerformances(item)[Number(button.dataset.session)];
+      if (session) downloadCalendar(item, [session]);
     } else if (button.dataset.action === "open") {
       window.open(item.url, "_blank", "noopener,noreferrer");
     }

@@ -43,6 +43,26 @@ sources.yaml ─▶ collectors ─▶ normalize ─▶ dedupe ─▶ taste facet
 4. **Score (optional)** — a semantic score is blended only while fresh; expired model output never switches the whole result set into a stale mode.
 5. **Browse** — Streamlit reads the DB live; GitHub Pages reads a bounded public snapshot.
 
+In the public browser, **篩選 → 指定日期 / 自訂區間** selects a day or an inclusive
+date range. Custom dates are shareable in the URL and results sort by the earliest
+matching session. Date, starting-time period, and city filters must match the same
+session. Gaps between discrete sessions do not count as event days; a continuous
+exhibition or festival can overlap a selected day.
+
+Multi-session cards list every published session in date order, with a scrollable
+list for long programs. Each row has its own calendar action; the card's calendar
+button exports the matching sessions as separate calendar entries. Favorites
+retain every published session, including when the event later leaves the feed.
+The public snapshot includes upcoming/ongoing sessions within its discovery horizon.
+
+When a feed supplies only an outer span, explicit organizer-verified dates can be
+recorded in `config/schedules.yaml`. These corrections apply to the public snapshot
+without changing existing event IDs or rewriting source rows. For example, the
+[Dadaocheng six-bookstore walk](https://www.accupass.com/event/2609130903502821300120)
+lists October 17, October 31 and November 14, 2026, each 15:00–17:00 (checked October 5).
+No recurrence or missing dates are guessed from a span. Other prose-only schedules
+still require a verified correction or a source that publishes structured sessions.
+
 ### Discovery methodology (reusable)
 Most ticketing sites are JS-rendered, but two patterns cover almost everything:
 - **Structured feed / API** — e.g. the Ministry of Culture open-data JSON; KKTIX organizer `events.json`.
