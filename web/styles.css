@@ -566,3 +566,13 @@ footer a { text-underline-offset: 3px; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }
+/* The directory stays compact and follows the selected event theme. */
+.source-network { margin: 36px 0; border-top: 1px solid var(--line, #deddd6); padding-top: 20px; }
+.source-network summary { cursor: pointer; font-weight: 700; }
+.source-network summary span { font-weight: 400; font-size: .8rem; margin-left: .6rem; }
+.source-network p { line-height: 1.65; color: var(--muted, #666); }
+.source-network__list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; margin-top: 22px; }
+.source-network__list article { min-width: 0; }
+.source-network__list a { font-weight: 650; color: inherit; }
+.source-network__list small { display: block; line-height: 1.7; margin-top: 6px; }
+.source-network__list p { font-size: .86rem; margin-top: 5px; }

@@ -142,6 +142,124 @@ events:
 
 # These are interests, not dated events. Check the next edition's official
 # announcement before moving an item into events. Never infer lunar dates.
+  - id: wan-nian-2026
+    title: 2026高雄左營萬年季
+    lens: folk
+    city: 高雄市
+    start_time: '2026-10-07'
+    end_time: '2026-10-11'
+    venue: 蓮池潭、孔廟及周邊廟宇
+    source_url: https://kcgtdo.kcg.gov.tw/News_Content.aspx?n=653B6A5D351526EB&s=CCF1903A2308A74C&sms=76387CE55A8EBD6D
+    checked_on: '2026-10-05'
+    selection_reason: 火獅踩街、廟宇巡禮和民俗展演，把左營街區與夜市一起排進行程。
+    source_name: 高雄市左營區公所
+  - id: newtaipei-yimin-2026
+    title: 115年新北市客家義民爺文化祭
+    lens: folk
+    city: 新北市
+    start_time: '2026-10-10'
+    end_time: '2026-10-12'
+    venue: 新北市政府市民廣場
+    source_url: https://newtaipei.travel/zh-tw/calendar/detail/4032
+    checked_on: '2026-10-05'
+    selection_reason: 迎神遶境、挑擔奉飯和客家八音，在板橋就能親近客家祭典。
+    source_name: 新北市觀光旅遊網
+  - id: taipei-yimin-2026
+    title: 2026臺北客家義民嘉年華
+    lens: folk
+    city: 台北市
+    start_time: '2026-10-24'
+    end_time: '2026-10-26'
+    venue: 中正紀念堂國家兩廳院藝文廣場
+    source_url: https://travel.taipei/zh-tw/event-calendar/details/66392
+    checked_on: '2026-10-05'
+    selection_reason: 迎神遶境、挑擔踩街與客庄文化；可以把祭典和城市散步排在同一天。
+    source_name: 臺北旅遊網
+  - id: nanying-2026
+    title: 2026南瀛國際民俗藝術節
+    lens: folk
+    city: 台南市
+    start_time: '2026-10-16'
+    end_time: '2026-10-25'
+    venue: 南瀛綠都心公園及臺南各區演出場地
+    source_url: https://nanyingfest.tnc.gov.tw/
+    checked_on: '2026-10-05'
+    selection_reason: 世界各地的民俗歌舞、傳統技藝與踩街在台南相遇；主場與各區巡演可分別挑場參加。
+    source_name: 南瀛國際民俗藝術節
+    registration_note: 各場日期與時間不同；主場開幕大匯演 10/17 19:30，閉幕 10/25 16:00，完整場次請看官網。
+  - id: ershui-2026
+    title: 2026二水國際跑水節
+    lens: folk
+    city: 彰化縣
+    start_time: '2026-10-31'
+    end_time: '2026-11-01'
+    venue: 彰化縣二水鄉林先生廟及跑水節活動場域
+    source_url: https://www.ershuiwaterun.tw/
+    checked_on: '2026-10-05'
+    selection_reason: 八堡圳的水文化、地方祭典與社區嘉年華；也能接著看跑水馬拉松。
+    source_name: 二水國際跑水節
+    registration_note: 祭典、跑水體驗與馬拉松是不同活動，個別時間與參加名額請看主辦公告。
+  - id: yunlin-puppets-2026
+    title: 2026雲林國際偶戲節
+    lens: folk
+    city: 雲林縣
+    start_time: '2026-09-29'
+    end_time: '2026-10-11'
+    venue: 雲林縣虎尾鎮及偶戲節各演出場地
+    source_url: https://media.taiwan.net.tw/zh-tw/portal/travel/details/event_a15010000h_081715
+    checked_on: '2026-10-05'
+    selection_reason: 布袋戲與國際偶戲團隊的現場演出，適合挑一場戲再走逛虎尾。
+    source_name: 觀光署活動資訊
+    registration_note: 節慶仍在進行；每日劇團、場地與入場方式請查節目表。
+  - id: salt-2026
+    title: 2026鯤鯓王平安鹽祭
+    lens: folk
+    city: 台南市
+    start_time: '2026-11-07'
+    end_time: '2026-11-08'
+    venue: 井仔腳瓦盤鹽田、南鯤鯓代天府
+    source_url: https://www.swcoast-nsa.gov.tw/zh-tw/event-calendar/details/2489
+    checked_on: '2026-10-05'
+    selection_reason: 王爺信仰結合鹽田文化，從祈福科儀到地方展演，適合安排北門濱海小旅行。
+    source_name: 雲嘉南濱海國家風景區
+  - id: sanyi-wood-2026
+    title: 2026三義木雕藝術節系列活動
+    lens: folk
+    city: 苗栗縣
+    start_time: '2026-10-09'
+    end_time: '2026-10-11'
+    venue: 三義木雕博物館及周邊活動場域
+    source_url: https://wood.mlc.gov.tw/active/Details.aspx?Parser=10,3,20,,,,366
+    checked_on: '2026-10-05'
+    selection_reason: 走進三義的木雕工藝與地方文化，適合看創作、逛聚落並認識傳統技藝。
+    source_name: 三義木雕博物館
+  - id: chillout-2026
+    title: 2026秋OUT音樂節
+    lens: music_festival
+    city: 台北市
+    start_time: '2026-10-10'
+    end_time: '2026-10-11'
+    venue: 公館商圈、水源新天地至古亭河濱公園
+    source_url: https://www.gov.taipei/News_Content.aspx?n=F0DDAF49B89E9413&s=D2E6805F8BA27A30
+    checked_on: '2026-10-05'
+    selection_reason: 五個舞台串起公館與河岸，含三座自由舞台，能用散步的方式聽團。
+    source_name: 臺北市政府
+    registration_note: 三座自由舞台、兩座售票舞台；各舞台時段與票券請查主辦。
+  - id: takao-hiing-2026
+    title: 2026 Takao Rock 打狗祭｜Hi-ing 5 免費舞台
+    lens: music_festival
+    city: 高雄市
+    start_time: '2026-10-10'
+    end_time: '2026-10-11'
+    venue: 高雄流行音樂中心海風、海膽、珊瑚舞台
+    source_url: https://www.takaorock.tw/action/19
+    checked_on: '2026-10-05'
+    selection_reason: 港邊三個免費舞台與兩日限定演出，適合把高雄音樂現場和海港散步一起安排。
+    source_name: 打狗祭官方
+    supersedes_titles:
+    - 2026 Takao Rock 打狗祭
+    registration_note: 此卡為 10/10–11 免費舞台；10/10 海音館專場及 10/31 未來趴另售票。
+
 watchlist:
   - id: yanshui-next
     title: "鹽水蜂炮"
@@ -164,3 +282,35 @@ watchlist:
     source_url: "https://www.baishatunmazu.org.tw/"
     checked_on: "2026-10-05"
     selection_reason: "徒步進香與沿途聚落互動是看點；追蹤年度北港進香，與平日贊境活動分開。"
+  - id: jibeishua
+    title: 東山吉貝耍西拉雅族夜祭
+    lens: folk
+    city: 台南市
+    source_url: https://taiwangods.moi.gov.tw/html/cultural/3_0011.aspx?i=49
+    checked_on: '2026-10-05'
+    selection_reason: 傳統夜祭與地方信仰；宗教月曆提供線索，行程與觀禮方式仍需依部落當年公告確認。
+    status: 今年行程待主辦確認
+  - id: alikan
+    title: 大武壠阿里關太祖祭典
+    lens: folk
+    city: 高雄市
+    source_url: https://taiwangods.moi.gov.tw/html/cultural/3_0011.aspx?i=194
+    checked_on: '2026-10-05'
+    selection_reason: 傳統夜祭與地方信仰；宗教月曆提供線索，行程與觀禮方式仍需依部落當年公告確認。
+    status: 今年行程待主辦確認
+  - id: toushe
+    title: 大內頭社太祖夜祭
+    lens: folk
+    city: 台南市
+    source_url: https://taiwangods.moi.gov.tw/html/cultural/3_0011.aspx?i=50
+    checked_on: '2026-10-05'
+    selection_reason: 傳統夜祭與地方信仰；宗教月曆提供線索，行程與觀禮方式仍需依部落當年公告確認。
+    status: 今年行程待主辦確認
+  - id: island-dream
+    title: 臺灣環島跑者圓夢計畫
+    lens: endurance
+    city: 全台
+    source_url: https://www.taipeimarathon.org.tw/contest.aspx
+    checked_on: '2026-10-05'
+    selection_reason: 多日環島跑的特殊挑戰；1045 公里版本與目前索引的火車站版本尚待核對，不混用不同屆次的日期與里程。
+    status: 屆次、里程與日期待確認

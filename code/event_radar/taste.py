@@ -143,7 +143,10 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
         "投資說明會", "被動收入", "財富自由", "直銷", "加盟說明", "ai賺錢",
         "流量變現", "免費說明會",
     ])
-    soft_negative = _matches(text, ["親子", "兒童", "純線上", "線上課程", "招生中"])
+    # An official all-ages festival can mention a children's area without being
+    # a children's-only event. Selected feeds already reject such titles.
+    soft_negative = (_matches(title if selection else text, ["親子", "兒童"])
+                     + _matches(text, ["純線上", "線上課程", "招生中"]))
     if soft_negative:
         score -= 24
     if hard_negative:

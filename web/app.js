@@ -14,6 +14,7 @@ const initialSaved = readSavedRecords();
 const state = {
   events: [],
   watchlist: [],
+  sources: [],
   today: "",
   generatedAt: "",
   view: "for-you",
@@ -107,6 +108,8 @@ function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
     lastEnd: event.lastEnd || event.lastStart || event.firstStart || "",
     dateOnly: Boolean(event.dateOnly),
     checkedOn: event.checkedOn || "",
+    automatic: Boolean(event.automatic),
+    sharedSourceUrl: Boolean(event.sharedSourceUrl),
     registrationNote: event.registrationNote || "",
     venue: event.venue || "",
     price: event.price || "",
@@ -152,9 +155,11 @@ function findCurrentFavorite(record, events) {
   const exact = events.find((event) => event.id === record.id);
   if (exact) return exact;
   const savedUrl = canonicalUrl(record.url);
-  if (savedUrl) {
-    const byUrl = events.find((event) => canonicalUrl(event.url) === savedUrl);
-    if (byUrl) return byUrl;
+  if (savedUrl && !record.sharedSourceUrl) {
+    const byUrl = events.filter((event) => !event.sharedSourceUrl
+      && canonicalUrl(event.url) === savedUrl
+      && dayDistance(event.firstStart, record.firstStart) <= 120);
+    if (byUrl.length === 1) return byUrl[0];
   }
   const title = identityText(record.title);
   const city = identityText(record.city);
@@ -403,7 +408,7 @@ function makeCard(event) {
   if (event.checkedOn) {
     const checked = document.createElement("p");
     checked.className = "event-card__checked";
-    checked.textContent = `資料查核 ${event.checkedOn} · 異動以主辦公告為準`;
+    checked.textContent = `${event.automatic ? "來源更新" : "資料查核"} ${event.checkedOn} · 異動以主辦公告為準`;
     body.append(checked);
   }
 
@@ -588,6 +593,7 @@ function downloadCalendar(event) {
 }
 
 function renderWatchlist() {
+  renderSources();
   const items = state.watchlist.filter((item) => (
     (state.lens === "all" || state.lens === item.lens) && state.view !== "saved"
     && (!state.query || `${item.title} ${item.city} ${item.reason}`.includes(state.query.trim()))
@@ -607,6 +613,30 @@ function renderWatchlist() {
     const status = document.createElement("small");
     status.textContent = `${item.status} · 查核 ${item.checkedOn}`;
     article.append(title, reason, status);
+    return article;
+  }));
+}
+
+function renderSources() {
+  const items = state.sources.filter((source) => state.lens === "all" || source.lenses.includes(state.lens));
+  el("source-network").hidden = !items.length || state.view === "saved";
+  el("source-summary").textContent = `${items.filter((source) => source.mode === "automatic").length} 個每日來源 · ${items.filter((source) => source.mode === "manual").length} 個人工窗口`;
+  el("source-items").replaceChildren(...items.map((source) => {
+    const article = document.createElement("article");
+    const link = document.createElement("a");
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = source.name;
+    const status = document.createElement("small");
+    status.textContent = source.status;
+    if (source.mode === "automatic") {
+      status.textContent += ` · ${source.count} 個符合主題的近期活動`;
+      if (source.lastSuccess) status.textContent += ` · 最近成功 ${source.lastSuccess.slice(0, 10)}`;
+    }
+    const note = document.createElement("p");
+    note.textContent = source.note;
+    article.append(link, status, note);
     return article;
   }));
 }
@@ -721,6 +751,8 @@ async function start() {
     state.events = Array.isArray(data.events) ? data.events : [];
     state.watchlist = (Array.isArray(data.watchlist) ? data.watchlist : [])
       .filter((item) => /^https:\/\//.test(item.url || ""));
+    state.sources = (Array.isArray(data.sourceNetwork) ? data.sourceNetwork : [])
+      .filter((item) => /^https:\/\//.test(item.url || "") && Array.isArray(item.lenses));
     state.today = data.today;
     state.generatedAt = data.generatedAt;
     const reconciled = reconcileSaved(state.events);

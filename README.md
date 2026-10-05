@@ -22,7 +22,7 @@ Finding good indie gigs, fringe theatre, stand-up, city walks, markets or weird-
 experiences in Taipei means checking a dozen ticketing sites one by one. **Event Radar**
 crawls them for you, keeps the next 90 days, and surfaces what matches *your* taste.
 
-- **Aggregates 8 automatic sources plus a small verified public supplement** into one local database
+- **Aggregates ticketing platforms, government calendars and organizer feeds**, with reviewed date corrections
 - **Explainable taste ranking**: categories answer what an event is; capped experiential facets explain why it may fit
 - **Two front ends**: the local Streamlit workbench and the mobile-first static `有空` browser
 - **Credit-card presale tags** (e.g. `💳Mastercard`, `💳玉山`) so you can filter to events your card gets early access to
@@ -62,9 +62,38 @@ Most ticketing sites are JS-rendered, but two patterns cover almost everything:
 | 年代售票 | Large concerts | listing → detail |
 | Accupass | Markets, real-life library, city walks, food/workshops | SSR search by keyword → JSON-LD |
 | Eventbrite | International / community / niche | SSR listing → JSON-LD |
+| 觀光署 | Taiwan folk events and music festivals | Daily v2 event JSON ZIP |
+| 超馬協會 | Domestic ultra, overnight, trail and relay races | Official calendar table, explicit edition years |
+| Focusline | CRUFU, trail, 100K and distinctive triathlon races | Public activity API; race and registration dates separated |
+| Festival organizers | 浮現、光球、PIPE、浪人祭、高流 | Public KKTIX organizer feeds; festival titles only |
 | Event Radar 精選 | Small, user-supplied gaps with verified public dates | Reviewed YAML + public source URL |
 
-> **Facebook is not supported** — events are behind a login wall and Meta's API only exposes them to Marketing Partners. In practice most FB-promoted events are cross-posted to the platforms above.
+The **活動情報站** directory is maintained in `config/discovery.yaml`. Its eight
+automatic endpoints run in the existing daily refresh. Religion calendars,
+organizer sites, official Facebook pages and media indexes are labeled **人工追蹤**;
+they are discovery windows, not claimed social-media integrations.
+
+Discovery snapshots live in `discovery_snapshots` in the existing SQLite database.
+Successful refreshes replace a source's previous set, including an empty future
+calendar. Failures keep the last success for at most seven days and show the failure
+and last successful date publicly. Historical DB rows cannot restore an expired
+managed feed. A zero count can mean the next festival has not yet been announced.
+
+Reviewed entries in `config/highlights.yaml` override matching feed titles and
+edition years (or explicit `supersedes_titles`). For example, the Zuoying
+district announcement corrects an outdated national-calendar range. Unknown dates,
+cancelled/postponed listings, long seasonal spans without individual dates, and
+suspicious shifted all-day timestamps are excluded from automatic discovery.
+Date-only listings never acquire invented start times. The tourism TLS adapter
+retains certificate-chain and hostname checks while allowing that host's legacy
+CA extensions on Python 3.13+; other hosts keep the default TLS behavior.
+
+Races require an explicit distinctive signal from a selected organizer or a reviewed
+selection. General 5K listings and training/volunteer courses do not qualify.
+The folk lens also requires a selection, so a permanent exhibit merely mentioning
+pilgrimages is not presented as a current ritual or festival.
+Shared organizer calendars carry `sharedSourceUrl`, so a disappearing saved race
+cannot be replaced by another race merely because they share a calendar URL.
 
 ---
 
@@ -86,7 +115,7 @@ Build the same static artifact used by GitHub Pages:
 
 ```bash
 npm ci
-PYTHONPATH=code .venv/bin/python -m event_radar.pipeline --only curated
+PYTHONPATH=code .venv/bin/python -m event_radar.pipeline --only curated discovery
 npm run build
 npm run check
 npm run smoke

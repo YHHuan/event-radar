@@ -1,0 +1,126 @@
+# Public source network. "manual" means a useful window, never a claimed feed.
+# Date corrections live in highlights.yaml and override matching feed editions.
+sources:
+  - id: tourism
+    name: 觀光署活動開放資料
+    mode: automatic
+    kind: tourism
+    url: https://www.taiwan.net.tw/m1.aspx?sno=0042375
+    endpoint: https://media.taiwan.net.tw/XMLReleaseAll_public/v2.0/Zh_tw/Event-json.zip
+    lenses: [folk, music_festival, endurance]
+    note: 全台節慶、民俗與音樂活動；只收日期明確的近期活動，長期系列另查場次。
+  - id: ctau
+    name: 超馬協會行事曆
+    mode: automatic
+    kind: ctau
+    url: https://www.ctau.org.tw/賽事與訓練/賽事行事曆/國內賽事行事曆/
+    endpoint: https://www.ctau.org.tw/賽事與訓練/賽事行事曆/國內賽事行事曆/
+    lenses: [endurance]
+    note: 跨夜、百公里、越野與接力；只收國內賽事，保留組別和報名期限。
+  - id: focusline
+    name: Focusline 特色賽事
+    mode: automatic
+    kind: focusline
+    url: https://www.focusline.com.tw/
+    endpoint: https://www.focusline.com.tw/api/act
+    lenses: [endurance]
+    note: 夸父追日、接力、越野、百K與特色三鐵；報名日期與比賽日期分開顯示。
+  - id: emerge
+    name: 浮現音樂主辦活動
+    mode: automatic
+    kind: kktix
+    slug: emergelivehouse2
+    url: https://emergelivehouse2.kktix.cc/
+    endpoint: https://emergelivehouse2.kktix.cc/events.json
+    lenses: [music_festival]
+    note: 追蹤浮現祭等音樂祭公告；略過住宿、周邊與接駁商品。
+  - id: glowball
+    name: 光球音樂祭
+    mode: automatic
+    kind: kktix
+    slug: glowballfestival
+    url: https://glowballfestival.kktix.cc/
+    endpoint: https://glowballfestival.kktix.cc/events.json
+    lenses: [music_festival]
+    note: 追蹤主辦的新一屆活動；尚未公告時不沿用往年日期。
+  - id: pipe
+    name: PIPE／秋OUT音樂節
+    mode: automatic
+    kind: kktix
+    slug: pipelivemusic
+    url: https://pipelivemusic.kktix.cc/
+    endpoint: https://pipelivemusic.kktix.cc/events.json
+    lenses: [music_festival]
+    note: 公館河岸與城市音樂節的主辦售票資訊。
+  - id: kpmc
+    name: 高雄流行音樂中心
+    mode: automatic
+    kind: kktix
+    slug: kpmc
+    url: https://kpmc.kktix.cc/
+    endpoint: https://kpmc.kktix.cc/events.json
+    lenses: [music_festival]
+    note: 打狗祭與高流主辦音樂祭；系列節目依各場演出時間收錄。
+  - id: vagabond
+    name: 浪人祭主辦活動
+    mode: automatic
+    kind: kktix
+    slug: vagabondfest
+    url: https://vagabondfest.kktix.cc/
+    endpoint: https://vagabondfest.kktix.cc/events.json
+    lenses: [music_festival]
+    note: 海邊音樂祭的新公告與跨日演出時間。
+  - id: gods
+    name: 內政部全國宗教資訊網
+    mode: manual
+    url: https://taiwangods.moi.gov.tw/html/timemap/6_002.aspx
+    lenses: [folk]
+    note: 找地方夜祭、太祖祭典、王爺與媽祖活動；年曆作為線索，出發前再核對宮廟或部落公告。
+  - id: nanying
+    name: 南瀛國際民俗藝術節
+    mode: manual
+    url: https://nanyingfest.tnc.gov.tw/
+    lenses: [folk]
+    note: 國際民俗表演、踩街與台南各區場次；精選場次查核後加入。
+  - id: ershui
+    name: 二水國際跑水節
+    mode: manual
+    url: https://www.ershuiwaterun.tw/
+    lenses: [folk, endurance]
+    note: 跑水祭典、社區嘉年華與跑水馬拉松，各活動須分別確認日期。
+  - id: wan
+    name: 左營萬年季官方粉專
+    mode: manual
+    url: https://www.facebook.com/FireLion.Kaohsiung/
+    lenses: [folk]
+    note: 火獅巡境與臨時行程異動；粉專目前人工追蹤。
+  - id: puppets
+    name: 雲林國際偶戲節官方粉專
+    mode: manual
+    url: https://www.facebook.com/puppet.yunlin.gov.tw/
+    lenses: [folk]
+    note: 布袋戲、掌中劇與各地演出時間表；粉專目前人工追蹤。
+  - id: taiwan-music
+    name: 台灣祭官方窗口
+    mode: manual
+    url: https://www.amazing-pingtung.com/tmf
+    lenses: [music_festival]
+    note: 屏東免費音樂祭的卡司與新一屆公告；不沿用往年日期。
+  - id: takaorock
+    name: 打狗祭官方網站
+    mode: manual
+    url: https://www.takaorock.tw/
+    lenses: [music_festival]
+    note: 免費舞台、系列節目與場域地圖；售票節目另由高流來源每日更新。
+  - id: festival-index
+    name: PartyStar 台灣看團潮
+    mode: manual
+    url: https://partystar.media/fest
+    lenses: [music_festival]
+    note: 音樂祭媒體索引用來補漏，日期仍回查主辦公告。
+  - id: runners
+    name: 跑者廣場全國賽會
+    mode: manual
+    url: https://www.taipeimarathon.org.tw/contest.aspx
+    lenses: [endurance]
+    note: 全台賽事索引，含環島與特殊挑戰；目前列為人工補漏窗口。

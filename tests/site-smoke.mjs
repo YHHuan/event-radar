@@ -187,10 +187,22 @@ try {
   ];
   fixture.watchlist = [{ id: 'test-annual', title: '鹽水蜂炮', lens: 'folk', city: '台南市',
     url: 'https://example.com/official', reason: '等待下一屆日期公告', checkedOn: '2026-10-05', status: '下一屆日期待確認' }];
+  fixture.sourceNetwork = [
+    { id: 'official', name: '官方節慶資料', url: 'https://example.com/official', lenses: ['folk'],
+      mode: 'automatic', status: '每日更新', lastSuccess: '2026-10-05T10:20:00+08:00', count: 3, note: '官方日期' },
+    { id: 'race', name: '特色賽事窗口', url: 'https://example.com/races', lenses: ['endurance'],
+      mode: 'automatic', status: '更新失敗，保留近期資料', lastSuccess: '2026-10-04T10:20:00+08:00', count: 2, note: '保留近期公告' },
+    { id: 'social', name: '地方廟會粉專', url: 'https://example.com/social', lenses: ['folk'],
+      mode: 'manual', status: '人工追蹤', count: 0, note: '日期依廟方公告' },
+    { id: 'unsafe', name: '不安全連結', url: 'javascript:alert(1)', lenses: ['folk'], mode: 'manual' },
+  ];
   const discovery = await browser.newPage({ viewport: { width: 390, height: 844 } });
   discovery.on('pageerror', (error) => errors.push(`discovery: ${error.message}`));
   await discovery.route('**/events.json', (route) => route.fulfill({ json: fixture }));
   await discovery.goto(base, { waitUntil: 'networkidle' });
+  await discovery.locator('#source-title').click();
+  if (await discovery.locator('#source-items article').count() !== 3) throw new Error('source directory lost entries or accepted an unsafe URL');
+  if (!(await discovery.locator('#source-items').textContent()).includes('更新失敗')) throw new Error('source failure was hidden');
   for (const [lens, expected] of [['music_festival', 'test-music'], ['folk', 'test-folk'], ['endurance', 'test-race']]) {
     await discovery.locator(`#discovery-filters button[data-value="${lens}"]`).click();
     if (await discovery.locator('.event-card').count() !== 1
@@ -215,6 +227,8 @@ try {
     throw new Error('saved race lost planning metadata');
   }
   await discovery.locator('#discovery-filters button[data-value="folk"]').click();
+  if (await discovery.locator('#source-items article').count() !== 2
+    || !(await discovery.locator('#source-items').textContent()).includes('人工追蹤')) throw new Error('folk sources did not distinguish social/manual windows');
   if (!(await discovery.locator('.event-card__date').textContent()).includes('進行中')) throw new Error('ongoing festival was not marked');
   if (!(await discovery.locator('#annual-watchlist').isVisible())) throw new Error('annual watchlist is missing');
   if (await discovery.locator('#annual-watchlist button[data-action="calendar"]').count()) throw new Error('undated interest became a calendar entry');
@@ -224,6 +238,21 @@ try {
   if (discoveryWidth[0] > discoveryWidth[1] + 1) throw new Error('discovery mobile layout overflow');
   if (process.env.SCREENSHOT_DIR) await discovery.screenshot({ path: resolve(process.env.SCREENSHOT_DIR, 'folk-mobile.png'), fullPage: true });
   await discovery.close();
+
+  // Distinct races can share an organizer calendar. An expired favorite must
+  // retain its own identity when another race remains at that URL.
+  const shared = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const oldRace = { ...makeEvent('retired-race', '已收藏的跨夜接力', 'endurance', '2026-10-10', '2026-10-11'),
+    url: 'https://example.com/calendar', sharedSourceUrl: true };
+  fixture.events = [{ ...makeEvent('different-race', '另一場百公里超馬', 'endurance', '2026-11-20', '2026-11-21'),
+    url: oldRace.url, sharedSourceUrl: true }];
+  await shared.route('**/events.json', (route) => route.fulfill({ json: fixture }));
+  await shared.addInitScript((record) => localStorage.setItem('ake-event-radar:saved:v2',
+    JSON.stringify({ version: 2, items: [record] })), oldRace);
+  await shared.goto(base, { waitUntil: 'networkidle' });
+  const preserved = await shared.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2')).items);
+  if (preserved.length !== 1 || preserved[0].id !== 'retired-race') throw new Error('shared calendar replaced a saved race');
+  await shared.close();
 
   const desktop = await checkViewport(1440, 1000, 'home-desktop');
   await desktop.close();
