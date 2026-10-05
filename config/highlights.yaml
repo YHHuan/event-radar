@@ -1,0 +1,166 @@
+# Public selections checked against the linked primary sources.
+# Date-only values intentionally omit unannounced start times.
+# Race registration is separate from race day; no live availability is implied.
+events:
+  - id: jazz-taipei-2026
+    title: "2026臺北爵士音樂節｜Jazz Right 北流主舞台"
+    lens: music_festival
+    organizer: "臺北市政府文化局"
+    source_name: "臺北旅遊網"
+    source_url: "https://www.travel.taipei/zh-tw/event-calendar/details/66390"
+    # Stage dates corroborated by the venue, distinct from the full festival:
+    # https://www.tmc.taipei/tw/blog/show/2026TaipeiJazzFestival?tapeID=tt01aEFZj-
+    checked_on: "2026-10-05"
+    city: "台北市"
+    start_time: "2026-10-09"
+    end_time: "2026-10-11"
+    venue: "臺北流行音樂中心戶外表演空間"
+    selection_reason: "北爵20週年的戶外主舞台，三天爵士現場，適合把北流周邊一起排進行程。"
+    tags: [爵士, 音樂節, 戶外, 20週年]
+  - id: jazz-taichung-2026
+    title: "2026臺中爵士音樂節"
+    lens: music_festival
+    organizer: "臺中市政府文化局"
+    source_name: "臺中觀光旅遊網"
+    source_url: "https://travel.taichung.gov.tw/zh-tw/event/activitydetail/10351"
+    checked_on: "2026-10-05"
+    city: "台中市"
+    start_time: "2026-10-16"
+    end_time: "2026-10-25"
+    venue: "臺中市民廣場"
+    selection_reason: "以爵士巨人為策展主軸，連續十天的城市音樂節，可以挑喜歡的場次安排台中小旅行。"
+    tags: [爵士, 音樂節, 城市]
+  - id: vagabond-2026
+    title: "2026浪人祭｜百年好運・億載千秋"
+    lens: music_festival
+    organizer: "笨道策展有限公司"
+    source_name: "KKTIX 主辦售票頁"
+    source_url: "https://vagabondfest.kktix.cc/events/2026-vagabond-festival"
+    checked_on: "2026-10-05"
+    city: "台南市"
+    start_time: "2026-11-07T12:00:00"
+    end_time: "2026-11-08T21:30:00"
+    venue: "安平觀夕平台旁大草皮（遙控飛行場）"
+    selection_reason: "海邊草地的雙日音樂祭，集結台日音樂人，也能把安平老城和海岸排成一趟週末。"
+    price: "單日預售 NT$2,200／雙日預售 NT$3,600；票況依售票頁"
+    tags: [音樂祭, 獨立音樂, 多舞台, 戶外]
+  - id: nanyao-2026
+    title: "2026彰化南瑤宮｜開基三媽暨十會媽角頭祈安遶境"
+    lens: folk
+    organizer: "彰化南瑤宮"
+    source_name: "國立教育廣播電臺"
+    source_url: "https://www.ner.gov.tw/Program/Episode/26092118001568243/"
+    checked_on: "2026-10-05"
+    city: "彰化縣"
+    start_time: "2026-10-03"
+    end_time: "2026-10-11"
+    venue: "彰化南瑤宮出發，途經中彰投各角頭"
+    selection_reason: "九天八夜串起中彰投的媽祖信仰圈；可選一段街區隨香，感受地方陣頭與沿途接駕。"
+    registration_note: "每日位置與路線依南瑤宮當日公告；可選一段參與。"
+    tags: [媽祖, 遶境, 街區, 民俗]
+  - id: qingshan-2026
+    title: "2026艋舺青山宮暗訪暨遶境"
+    lens: folk
+    organizer: "艋舺青山宮"
+    source_name: "臺北旅遊網"
+    source_url: "https://www.travel.taipei/zh-tw/event-calendar/details/66400"
+    checked_on: "2026-10-05"
+    city: "台北市"
+    start_time: "2026-11-28"
+    end_time: "2026-11-30"
+    venue: "艋舺青山宮與萬華街區"
+    selection_reason: "在萬華街區看暗訪、陣頭與遶境，適合連同艋舺老城散步一起安排。"
+    registration_note: "暗訪、遶境場次及路線以青山宮公告為準。"
+    tags: [民俗, 遶境, 暗訪, 街區]
+  - id: sunmoon-marathon-2026
+    title: "2026日月潭環湖馬拉松"
+    lens: endurance
+    organizer: "中華運動生活協會"
+    source_name: "日月潭國家風景區管理處"
+    source_url: "https://www.sunmoonlake.gov.tw/events/Activitys?a=24&id=7"
+    checked_on: "2026-10-05"
+    city: "南投縣"
+    start_time: "2026-11-01T06:00:00"
+    end_time: "2026-11-01T14:00:00"
+    venue: "日月潭向山遊客中心與環湖道路"
+    selection_reason: "以日月潭湖岸景觀為主角的特色路線，從向山出發，把跑步與湖畔旅行放在一起。"
+    registration_note: "參賽資格與各組報名狀態請見主辦簡章；此處日期為比賽日。"
+    tags: [馬拉松, 環湖, 特色路線]
+  - id: kenting-703-2026
+    title: "2026 IRONMAN 70.3 Kenting 墾丁國際鐵人三項"
+    lens: endurance
+    organizer: "IRONMAN Taiwan"
+    source_name: "IRONMAN 官方報名頁"
+    source_url: "https://regtwn1.ironman.com/event/2026-ironman-703-kenting"
+    checked_on: "2026-10-05"
+    city: "屏東縣"
+    start_time: "2026-11-01"
+    venue: "墾丁（各項賽道依主辦簡章）"
+    selection_reason: "國際70.3系列的台灣賽站，結合游泳、自行車與路跑，適合專程規劃墾丁賽事週末。"
+    registration_note: "11/1 為比賽日；報到、名額與資格以主辦公告為準。"
+    tags: [三鐵, 鐵人三項, 國際賽事]
+  - id: tianzhong-2026
+    title: "2026台灣米倉田中馬拉松"
+    lens: endurance
+    organizer: "田中馬拉松"
+    source_name: "iRunner 主辦報名頁"
+    source_url: "https://irunner.biji.co/Tianzhong2026"
+    checked_on: "2026-10-05"
+    city: "彰化縣"
+    start_time: "2026-11-08"
+    venue: "田中鎮景崧文化教育園區"
+    selection_reason: "以米倉小鎮的人情與社區補給見長的大型賽事，全馬賽道具WA／AIMS認證。"
+    registration_note: "一般報名已截止（10/5 查核）；參賽需已有名額，可另規劃觀賽。"
+    tags: [馬拉松, 特色補給, 米倉, 大型賽事]
+  - id: taipei-marathon-2026
+    title: "2026臺北馬拉松"
+    lens: endurance
+    organizer: "臺北馬拉松"
+    source_name: "臺北馬拉松官網"
+    source_url: "https://www.taipeicitymarathon.com/REGULATION202612.php"
+    checked_on: "2026-10-05"
+    city: "台北市"
+    start_time: "2026-12-20T06:30:00"
+    venue: "臺北市市民廣場起跑"
+    selection_reason: "全馬與半馬的大型城市賽事，從市民廣場出發；適合把年度目標或沿線觀賽提早排入日程。"
+    registration_note: "06:30 為全馬起跑；半馬時段、抽籤及候補資格請見簡章。"
+    tags: [馬拉松, 半馬, 城市, 大型賽事]
+  - id: challenge-taiwan-2027
+    title: "2027 Challenge Taiwan 臺東國際鐵人三項"
+    lens: endurance
+    organizer: "社團法人台灣鐵人三項運動發展協會"
+    source_name: "Challenge Taiwan 官網"
+    source_url: "https://www.challenge-taiwan.com/page/about/index.aspx?kind=52"
+    checked_on: "2026-10-05"
+    city: "台東縣"
+    start_time: "2027-04-24"
+    end_time: "2027-04-25"
+    venue: "臺東活水湖、東海岸及臺東縣立體育館"
+    selection_reason: "大型三鐵賽事串起活水湖、東海岸與市區；不同距離分兩天舉行，值得提早安排交通與住宿。"
+    registration_note: "4/24 為226／113公里，4/25 為其他組別；名額與報到時間依主辦簡章。"
+    tags: [三鐵, 鐵人三項, 東海岸, 大型賽事]
+
+# These are interests, not dated events. Check the next edition's official
+# announcement before moving an item into events. Never infer lunar dates.
+watchlist:
+  - id: yanshui-next
+    title: "鹽水蜂炮"
+    lens: folk
+    city: "台南市"
+    source_url: "https://www.tainan.gov.tw/News_Content.aspx?n=13370&s=8799751"
+    checked_on: "2026-10-05"
+    selection_reason: "鹽水街區的代表性元宵民俗；目前連結為2026屆介紹，下一屆日期與參與規範待官方確認。"
+  - id: dajia-next
+    title: "大甲媽祖遶境進香"
+    lens: folk
+    city: "台中市起駕"
+    source_url: "https://www.dajiamazu.org.tw/"
+    checked_on: "2026-10-05"
+    selection_reason: "跨縣市的媽祖徒步進香，可選一段隨香；下一屆起駕日與路線以鎮瀾宮公告為準。"
+  - id: baishatun-next
+    title: "白沙屯媽祖年度進香"
+    lens: folk
+    city: "苗栗縣起駕"
+    source_url: "https://www.baishatunmazu.org.tw/"
+    checked_on: "2026-10-05"
+    selection_reason: "徒步進香與沿途聚落互動是看點；追蹤年度北港進香，與平日贊境活動分開。"

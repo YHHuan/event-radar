@@ -9,6 +9,12 @@ category from why it may be worth leaving home for: live presence, curatorial
 context, place, limited context, scene culture, wandering, participation and
 urban nature.
 
+The **音樂祭 / 民俗祭典 / 路跑三鐵** shortcuts show Taiwan-wide selections,
+including announced events up to a year ahead. Races are selected for their scale,
+distinctive route or local culture; merely mentioning a marathon does not qualify.
+Multi-day events remain visible until their last day. **年度追蹤** holds undated
+interests such as Yanshui and Mazu pilgrimages separately from the calendar.
+
 > A personal, taste-based event radar for Taipei's arts / indie / niche scene.
 > 個人化藝文活動雷達 —— 把分散在各售票平台的活動,自動收進來、依你的口味打分,只顯示「你可能會想去」的。
 
@@ -112,6 +118,7 @@ PYTHONPATH=code .venv/bin/python -m event_radar.scoring apply    # write scores 
 - **`config/profile.yaml`** — your taste: positive/negative keywords, regions, weights, and `credit_cards.mine`. This is what makes recommendations *yours*; edit it freely.
 - **`config/taste.yaml`** — the current experience facets, observed examples and model-score freshness policy.
 - **`config/curated_events.yaml`** — a small reviewed supplement for public events missed by automatic discovery.
+- **`config/highlights.yaml`** — sourced festival/race selections and undated annual interests. Each entry has an explicit reason and check date. Reviewed values override stale collector rows with the same source URL; normal listings keep the 120-day window while these selections can extend to 365 days.
 - **`config/sources.yaml`** — which sources are enabled, KKTIX organizer slugs, Accupass search keywords, etc.
 
 ---
@@ -142,6 +149,13 @@ Python 3.12 · SQLite · Streamlit · `requests` + stdlib HTML/JSON-LD parsing (
 - Collectors crawl public pages politely (≤1 req/sec, identifying User-Agent). Respect each site's ToS.
 - Some sources are Cloudflare- or JS-gated; those are handled via organizer feeds / structured data, or left out.
 - This is a personal project shared as-is.
+- Festival organizer feeds refresh on the existing daily workflow. The reviewed
+  race/folk catalog and annual watchlist require checking official announcements;
+  the site's build timestamp is not a new manual verification date. Do not infer
+  next year's lunar dates. Add confirmed dates to `events`, keep unconfirmed
+  editions in `watchlist`, and record signup status separately from event dates.
+- Date-only selections export as all-day calendar entries with an exclusive end
+  date. Timed entries use Asia/Taipei. Browser favorites retain these details.
 
 ## License
 MIT — see [LICENSE](LICENSE).

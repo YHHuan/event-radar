@@ -56,10 +56,15 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
     today = today or date.today()
     title, core_text, text = _text(ev)
     score = 12
+    selection = ev.get("_selection") or {}
 
     lenses: list[dict[str, Any]] = []
     for key, definition in cfg.get("lenses", {}).items():
-        hits = _matches(text, definition.get("keywords", []))
+        if definition.get("reviewed_only") and selection.get("lens") != key:
+            continue
+        hits = _matches(core_text, definition.get("keywords", []))
+        if selection.get("lens") == key:
+            hits = hits or [definition["label"]]
         if hits:
             lenses.append({"key": key, "label": definition["label"], "hits": hits[:4]})
     score += min(10, 6 + max(0, len(lenses) - 1) * 2) if lenses else 0
@@ -101,7 +106,16 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
     elif city:
         score -= 9
 
-    start = _parse_date(ev.get("first_start"))
+    # A festival remains current through its final day; a recurring event may
+    # have future performances even when its database first_start is historical.
+    performances = ev.get("performances") or []
+    relevant_starts = []
+    for perf in performances:
+        perf_start = _parse_date(perf.get("start_time"))
+        perf_end = _parse_date(perf.get("end_time")) or perf_start
+        if perf_start and perf_end and perf_end >= today:
+            relevant_starts.append(max(perf_start, today))
+    start = min(relevant_starts) if relevant_starts else _parse_date(ev.get("first_start"))
     if start:
         days = (start - today).days
         if 0 <= days <= 30:
@@ -111,7 +125,6 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
     else:
         days = None
 
-    performances = ev.get("performances") or []
     venue = next((p.get("venue_name") for p in performances if p.get("venue_name")), None)
     public_url = ev.get("ticket_url") or ev.get("source_url")
     if start and venue and public_url:
@@ -135,6 +148,8 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
         score -= 24
     if hard_negative:
         score = 0
+    elif selection and not soft_negative:
+        score = max(score, 76)
 
     score = max(0, min(100, round(score)))
     confidence = 30
@@ -145,8 +160,9 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
     confidence += 10 if ev.get("image_url") else 0
 
     ranked_facets = sorted(facets, key=lambda item: item["weight"], reverse=True)
-    reason = _reason(ranked_facets, lenses, city, cfg, signatures)
-    if hard_negative or (days is not None and (days < -1 or days > 120)):
+    reason = selection.get("selection_reason") or _reason(ranked_facets, lenses, city, cfg, signatures)
+    horizon = 365 if selection else 120
+    if hard_negative or (days is not None and (days < 0 or days > horizon)):
         decision = "drop"
     elif not (start and venue and public_url) or soft_negative or score < 34:
         decision = "demote"

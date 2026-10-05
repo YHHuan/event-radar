@@ -169,6 +169,62 @@ try {
   if ((await denied.locator('#save-status').getAttribute('data-kind')) !== 'error') throw new Error('failed write was not reported');
   await denied.close();
 
+  // Fixed dates keep the new discovery checks independent of live announcements.
+  const fixture = JSON.parse(await readFile(resolve(site, 'events.json'), 'utf8'));
+  const example = fixture.events[0];
+  const makeEvent = (id, title, lens, firstStart, lastEnd) => ({
+    ...example, id, title, city: '台南市', tier: 'strong', image: '',
+    firstStart, lastStart: firstStart, lastEnd, dateOnly: firstStart.length === 10,
+    performanceCount: 1, performances: [{ start: firstStart, end: lastEnd, venue: '測試場地' }],
+    lenses: [{ key: lens, label: { music_festival: '音樂祭', folk: '民俗祭典', endurance: '路跑三鐵' }[lens] }],
+    checkedOn: '2026-10-05', registrationNote: '各組報名與比賽日期分開確認',
+  });
+  fixture.today = '2026-10-05';
+  fixture.events = [
+    makeEvent('test-music', '海邊音樂祭', 'music_festival', '2026-10-09T12:00:00', '2026-10-11T21:00:00'),
+    makeEvent('test-folk', '進行中的媽祖遶境', 'folk', '2026-10-03', '2026-10-11'),
+    makeEvent('test-race', '明年的特色三鐵', 'endurance', '2027-04-24', '2027-04-25'),
+  ];
+  fixture.watchlist = [{ id: 'test-annual', title: '鹽水蜂炮', lens: 'folk', city: '台南市',
+    url: 'https://example.com/official', reason: '等待下一屆日期公告', checkedOn: '2026-10-05', status: '下一屆日期待確認' }];
+  const discovery = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  discovery.on('pageerror', (error) => errors.push(`discovery: ${error.message}`));
+  await discovery.route('**/events.json', (route) => route.fulfill({ json: fixture }));
+  await discovery.goto(base, { waitUntil: 'networkidle' });
+  for (const [lens, expected] of [['music_festival', 'test-music'], ['folk', 'test-folk'], ['endurance', 'test-race']]) {
+    await discovery.locator(`#discovery-filters button[data-value="${lens}"]`).click();
+    if (await discovery.locator('.event-card').count() !== 1
+      || await discovery.locator('.event-card').getAttribute('data-id') !== expected) {
+      throw new Error(`wrong discovery results for ${lens}`);
+    }
+    if (new URL(discovery.url()).searchParams.get('lens') !== lens
+      || new URL(discovery.url()).searchParams.get('when') !== 'all') throw new Error('annual discovery URL was lost');
+  }
+  if (!(await discovery.locator('.event-card__date').textContent()).includes('2027')) throw new Error('future year is ambiguous');
+  const allDayPromise = discovery.waitForEvent('download');
+  await discovery.locator('button[data-action="calendar"]').click();
+  const allDayDownload = await allDayPromise;
+  const allDayText = await readFile(await allDayDownload.path(), 'utf8');
+  if (!allDayText.includes('DTSTART;VALUE=DATE:20270424') || !allDayText.includes('DTEND;VALUE=DATE:20270426')) {
+    throw new Error('all-day festival calendar did not use an exclusive end');
+  }
+  await discovery.locator('button[data-action="save"]').click();
+  await discovery.reload({ waitUntil: 'networkidle' });
+  const savedRace = await discovery.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2')).items[0]);
+  if (savedRace.lastEnd !== '2027-04-25' || !savedRace.dateOnly || !savedRace.registrationNote) {
+    throw new Error('saved race lost planning metadata');
+  }
+  await discovery.locator('#discovery-filters button[data-value="folk"]').click();
+  if (!(await discovery.locator('.event-card__date').textContent()).includes('進行中')) throw new Error('ongoing festival was not marked');
+  if (!(await discovery.locator('#annual-watchlist').isVisible())) throw new Error('annual watchlist is missing');
+  if (await discovery.locator('#annual-watchlist button[data-action="calendar"]').count()) throw new Error('undated interest became a calendar entry');
+  await discovery.locator('#views button[data-view="weekend"]').click();
+  if (await discovery.locator('.event-card').count() !== 1) throw new Error('ongoing festival disappeared from this weekend');
+  const discoveryWidth = await discovery.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+  if (discoveryWidth[0] > discoveryWidth[1] + 1) throw new Error('discovery mobile layout overflow');
+  if (process.env.SCREENSHOT_DIR) await discovery.screenshot({ path: resolve(process.env.SCREENSHOT_DIR, 'folk-mobile.png'), fullPage: true });
+  await discovery.close();
+
   const desktop = await checkViewport(1440, 1000, 'home-desktop');
   await desktop.close();
 

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 from . import db
 from .config import PROJECT_ROOT, taste
+from .highlights import public_watchlist, selected_events
 from .taste import analyze_event, blended_score, normalized_image_url
 
 WEB_DIR = PROJECT_ROOT / "web"
@@ -49,10 +50,13 @@ def _load_candidates(today: date, horizon_days: int) -> list[dict]:
     end = (today + timedelta(days=horizon_days + 1)).isoformat()
     with db.connect() as conn:
         event_rows = conn.execute(
-            """SELECT * FROM events
+            """SELECT * FROM events e
                WHERE status = 'active'
-                 AND first_start IS NOT NULL
-                 AND first_start >= ? AND first_start < ?
+                 AND EXISTS (
+                     SELECT 1 FROM performances p WHERE p.event_id = e.event_id
+                       AND COALESCE(NULLIF(p.end_time, ''), p.start_time) >= ?
+                       AND p.start_time < ?
+                 )
                ORDER BY first_start, event_id""",
             (start, end),
         ).fetchall()
@@ -85,7 +89,16 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
     prepared: list[dict] = []
     seen: set[tuple[str, str, str]] = set()
 
-    for event in _load_candidates(today, horizon_days):
+    # Reviewed corrections take precedence over older database rows. Only these
+    # selections get the annual planning window; ordinary discovery stays near-term.
+    reviewed = selected_events()
+    reviewed_urls = {item["source_url"].rstrip("/") for item in reviewed}
+    candidates = reviewed + [item for item in _load_candidates(today, horizon_days)
+                             if not any((item.get(key) or "").rstrip("/") in reviewed_urls
+                                        for key in ("source_url", "ticket_url"))]
+    for event in candidates:
+        selection = event.get("_selection") or {}
+        event_horizon = 365 if selection else horizon_days
         analysis = analyze_event(event, today=today)
         rank, rank_mode = blended_score(event, analysis)
         if analysis["decision"] == "drop" or rank < 38:
@@ -97,7 +110,9 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
         performances = []
         for perf in event.get("performances") or []:
             start_time = perf.get("start_time")
-            if not start_time or start_time[:10] < today.isoformat():
+            end_time = perf.get("end_time") or start_time
+            if (not start_time or end_time[:10] < today.isoformat()
+                    or start_time[:10] > (today + timedelta(days=event_horizon)).isoformat()):
                 continue
             performances.append(
                 {
@@ -137,6 +152,11 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                 "image": normalized_image_url(event.get("image_url")),
                 "firstStart": first["start"],
                 "lastStart": (performances[-1].get("start") or first["start"]),
+                "lastEnd": max(perf["end"] or perf["start"] for perf in performances),
+                "dateOnly": len(first["start"]) == 10,
+                "ongoing": first["start"][:10] < today.isoformat(),
+                "checkedOn": selection.get("checked_on", ""),
+                "registrationNote": selection.get("registration_note", ""),
                 "venue": first["venue"],
                 "price": first["price"],
                 "performances": performances[:20],
@@ -151,15 +171,17 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                 ],
                 "lenses": [
                     {"key": item["key"], "label": item["label"]}
-                    for item in analysis["lenses"][:3]
+                    for item in analysis["lenses"]
                 ],
                 "confidence": analysis["confidence"],
                 "tags": list(dict.fromkeys(event.get("tags") or []))[:8],
             }
         )
 
-    prepared.sort(key=lambda event: (-event["score"], event["firstStart"], event["title"]))
+    # Reserve space for the bounded reviewed catalog even on busy concert weeks.
+    prepared.sort(key=lambda event: (not bool(event["checkedOn"]), -event["score"], event["firstStart"], event["title"]))
     prepared = prepared[:max_events]
+    prepared.sort(key=lambda event: (-event["score"], event["firstStart"], event["title"]))
     source_counts = Counter(event["source"] for event in prepared)
     city_counts = Counter(event["city"] for event in prepared)
     lens_counts = Counter(
@@ -171,9 +193,11 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
         "generatedAt": generated_at,
         "today": today.isoformat(),
         "horizonDays": horizon_days,
+        "planningHorizonDays": 365,
         "tasteRevision": cfg.get("revision"),
         "publicUrl": PUBLIC_URL,
         "events": prepared,
+        "watchlist": public_watchlist(),
         "meta": {
             "count": len(prepared),
             "pickCount": sum(event["tier"] == "pick" for event in prepared),

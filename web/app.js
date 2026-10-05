@@ -7,12 +7,13 @@ const STORAGE = {
 };
 const PAGE_SIZE = 18;
 const MAX_SAVED = 200;
-const LENS_ORDER = ["live_music", "theatre_dance", "film", "market_festival", "exhibition", "nature", "urban", "talks"];
+const LENS_ORDER = ["music_festival", "folk", "endurance", "live_music", "theatre_dance", "film", "market_festival", "exhibition", "nature", "urban", "talks"];
 
 const initialSaved = readSavedRecords();
 
 const state = {
   events: [],
+  watchlist: [],
   today: "",
   generatedAt: "",
   view: "for-you",
@@ -103,6 +104,10 @@ function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
     image: event.image || "",
     firstStart: event.firstStart || "",
     lastStart: event.lastStart || event.firstStart || "",
+    lastEnd: event.lastEnd || event.lastStart || event.firstStart || "",
+    dateOnly: Boolean(event.dateOnly),
+    checkedOn: event.checkedOn || "",
+    registrationNote: event.registrationNote || "",
     venue: event.venue || "",
     price: event.price || "",
     performances: Array.isArray(event.performances) ? event.performances.slice(0, 1) : [],
@@ -112,7 +117,7 @@ function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
     tier: event.tier || "explore",
     reason: event.reason || "先前收藏",
     facets: Array.isArray(event.facets) ? event.facets.slice(0, 4) : [],
-    lenses: Array.isArray(event.lenses) ? event.lenses.slice(0, 3) : [],
+    lenses: Array.isArray(event.lenses) ? event.lenses.slice(0, LENS_ORDER.length) : [],
     confidence: event.confidence || "",
     tags: Array.isArray(event.tags) ? event.tags.slice(0, 8) : [],
     savedAt,
@@ -233,10 +238,20 @@ function formatDate(value, withTime = true) {
   const d = localDate(value);
   if (!d) return "日期待確認";
   const datePart = new Intl.DateTimeFormat("zh-TW", {
+    ...(value.slice(0, 4) !== state.today.slice(0, 4) ? { year: "numeric" } : {}),
     month: "numeric", day: "numeric", weekday: "short",
   }).format(d);
   const time = value.slice(11, 16);
   return withTime && time && time !== "00:00" ? `${datePart} ${time}` : datePart;
+}
+
+function eventDateLabel(event) {
+  const first = event.firstStart;
+  const end = event.lastEnd || event.lastStart || first;
+  const range = first.slice(0, 10) !== end.slice(0, 10);
+  const ongoing = first.slice(0, 10) < state.today && end.slice(0, 10) >= state.today;
+  if (event.performanceCount > 1) return `${formatDate(first)} 起 · 共 ${event.performanceCount} 場`;
+  return `${ongoing ? "進行中 · " : ""}${formatDate(first, !range)}${range ? ` — ${formatDate(end, false)}` : ""}`;
 }
 
 function weekendBounds() {
@@ -286,7 +301,10 @@ function filteredEvents() {
     if (state.view === "saved" && !state.saved.has(event.id)) return false;
     if (state.view === "for-you" && !["pick", "strong"].includes(event.tier)) return false;
     const days = daysFromToday(event.firstStart);
-    if (state.view === "weekend" && (days < weekendStart || days > weekendEnd)) return false;
+    const performances = event.performances?.length ? event.performances : [{ start: event.firstStart, end: event.lastEnd }];
+    if (state.view === "weekend" && !performances.some((perf) => (
+      daysFromToday(perf.start) <= weekendEnd && daysFromToday(perf.end || perf.start) >= weekendStart
+    ))) return false;
     if (state.when !== "all" && days > Number(state.when)) return false;
     if (!matchesCity(event)) return false;
     if (!matchesPeriod(event)) return false;
@@ -337,7 +355,7 @@ function makeCard(event) {
   topline.className = "event-card__topline";
   const date = document.createElement("span");
   date.className = "event-card__date";
-  date.textContent = formatDate(event.firstStart);
+  date.textContent = eventDateLabel(event);
   topline.append(date);
   if (event.tier === "pick") {
     const tier = document.createElement("span");
@@ -366,6 +384,12 @@ function makeCard(event) {
   reason.className = "event-card__reason";
   reason.textContent = event.reason;
   middle.append(reason);
+  if (event.registrationNote) {
+    const note = document.createElement("p");
+    note.className = "event-card__notice";
+    note.textContent = event.registrationNote;
+    middle.append(note);
+  }
   const tags = document.createElement("div");
   tags.className = "event-card__tags";
   [...(event.facets || []).slice(0, 2), ...(event.lenses || []).slice(0, 1)].forEach((item) => {
@@ -376,6 +400,12 @@ function makeCard(event) {
   });
   middle.append(tags);
   body.append(middle);
+  if (event.checkedOn) {
+    const checked = document.createElement("p");
+    checked.className = "event-card__checked";
+    checked.textContent = `資料查核 ${event.checkedOn} · 異動以主辦公告為準`;
+    body.append(checked);
+  }
 
   const footer = document.createElement("div");
   footer.className = "event-card__footer";
@@ -406,6 +436,8 @@ function render() {
   el("load-more").hidden = shown.length >= events.length;
   el("load-more").textContent = `再顯示 ${Math.min(PAGE_SIZE, events.length - shown.length)} 個`;
   el("clear-search").hidden = !state.query;
+  el("results-title").textContent = state.when === "all" ? "活動日程" : "近期活動";
+  renderWatchlist();
   updateControls();
   syncUrl();
 }
@@ -423,7 +455,7 @@ function updateControls() {
   document.querySelectorAll("#period-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.period));
   });
-  document.querySelectorAll("#lens-filters button").forEach((button) => {
+  document.querySelectorAll("#lens-filters button, #discovery-filters button").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.value === state.lens));
   });
   const active = Number(state.when !== "90") + Number(state.city !== "all")
@@ -525,11 +557,23 @@ function downloadCalendar(event) {
   const start = event.firstStart.replace(/[-:]/g, "").replace("T", "T").slice(0, 15);
   const endRaw = event.performances?.[0]?.end || event.firstStart;
   const end = endRaw.replace(/[-:]/g, "").replace("T", "T").slice(0, 15);
+  const dateOnly = event.dateOnly || event.firstStart.length === 10;
+  let dates;
+  if (dateOnly) {
+    const last = localDate(endRaw);
+    last.setDate(last.getDate() + 1); // RFC 5545 all-day DTEND is exclusive.
+    const exclusiveEnd = `${last.getFullYear()}${String(last.getMonth() + 1).padStart(2, "0")}${String(last.getDate()).padStart(2, "0")}`;
+    dates = [`DTSTART;VALUE=DATE:${start.slice(0, 8)}`, `DTEND;VALUE=DATE:${exclusiveEnd}`];
+  } else {
+    dates = [`DTSTART;TZID=Asia/Taipei:${start}`];
+    if (end > start) dates.push(`DTEND;TZID=Asia/Taipei:${end}`);
+  }
   const escape = (value) => String(value || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
   const ics = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//A-Ke//Event Radar//ZH-TW",
     "BEGIN:VEVENT", `UID:${escape(event.id)}@ake-event-radar`,
-    `DTSTART:${start}`, `DTEND:${end}`, `SUMMARY:${escape(event.title)}`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z")}`,
+    ...dates, `SUMMARY:${escape(event.title)}`,
     `LOCATION:${escape([event.city, event.venue].filter(Boolean).join(" "))}`,
     `DESCRIPTION:${escape(`${event.reason} ${event.url}`)}`, `URL:${event.url}`,
     "END:VEVENT", "END:VCALENDAR", "",
@@ -543,7 +587,44 @@ function downloadCalendar(event) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function renderWatchlist() {
+  const items = state.watchlist.filter((item) => (
+    (state.lens === "all" || state.lens === item.lens) && state.view !== "saved"
+    && (!state.query || `${item.title} ${item.city} ${item.reason}`.includes(state.query.trim()))
+  ));
+  el("annual-watchlist").hidden = !items.length;
+  el("watchlist-items").replaceChildren(...items.map((item) => {
+    const article = document.createElement("article");
+    const title = document.createElement("h3");
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = item.title;
+    title.append(link);
+    const reason = document.createElement("p");
+    reason.textContent = item.reason;
+    const status = document.createElement("small");
+    status.textContent = `${item.status} · 查核 ${item.checkedOn}`;
+    article.append(title, reason, status);
+    return article;
+  }));
+}
+
 function bindEvents() {
+  el("discovery-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-value]");
+    if (!button) return;
+    state.lens = state.lens === button.dataset.value ? "all" : button.dataset.value;
+    state.view = "all";
+    state.when = "all";
+    state.city = "all";
+    state.period = "all";
+    state.query = "";
+    state.visible = PAGE_SIZE;
+    el("search").value = "";
+    render();
+  });
   el("search").addEventListener("input", (event) => {
     state.query = event.target.value;
     state.visible = PAGE_SIZE;
@@ -638,6 +719,8 @@ async function start() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     state.events = Array.isArray(data.events) ? data.events : [];
+    state.watchlist = (Array.isArray(data.watchlist) ? data.watchlist : [])
+      .filter((item) => /^https:\/\//.test(item.url || ""));
     state.today = data.today;
     state.generatedAt = data.generatedAt;
     const reconciled = reconcileSaved(state.events);
