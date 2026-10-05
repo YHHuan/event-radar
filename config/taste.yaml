@@ -3,7 +3,7 @@
 # Categories answer "what is it?". Facets answer "why is it worth leaving home?".
 # Facets are scored at most once each so verbose listings cannot inflate relevance.
 
-revision: "2026-10-05-v4"
+revision: "2026-10-05-v5"
 model_score_max_age_days: 21
 primary_cities: ["台北市", "新北市"]
 nearby_cities: ["桃園市", "基隆市"]
@@ -44,14 +44,15 @@ observed_examples:
 lenses:
   music_festival:
     label: "音樂祭"
-    keywords: ["音樂祭", "音樂節", "浪人祭", "大港開唱", "搖滾祭"]
+    keywords: ["音樂祭", "音樂節", "浪人祭", "大港開唱", "浮現祭", "火球祭", "打狗祭", "搖滾祭", "PASIWALI"]
   folk:
     label: "民俗祭典"
-    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗祭典"]
+    reviewed_only: true
+    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗", "夜祭", "太祖祭", "義民", "萬年季", "跑水節", "偶戲節", "豐年祭", "平安鹽祭"]
   endurance:
     label: "路跑三鐵"
     reviewed_only: true
-    keywords: ["馬拉松", "三鐵", "鐵人三項", "越野跑", "ironman", "challenge taiwan"]
+    keywords: ["馬拉松", "三鐵", "鐵人三項", "越野", "接力", "跨夜", "百K", "CRUFU", "夸父", "環島", "超馬", "ironman", "challenge taiwan"]
   live_music:
     label: "音樂現場"
     keywords: ["演唱會", "音樂會", "音樂節", "live", "livehouse", "live house", "樂團", "巡演", "專場", "發片", "爵士", "jazz", "dj", "搖滾", "後搖", "indie", "嘻哈", "演奏"]
@@ -93,7 +94,7 @@ facets:
   folk_culture:
     label: "地方民俗"
     weight: 14
-    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗祭典"]
+    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗", "夜祭", "太祖祭", "義民", "萬年季", "跑水節", "偶戲節", "豐年祭", "平安鹽祭"]
   place:
     label: "場域成為體驗"
     weight: 11

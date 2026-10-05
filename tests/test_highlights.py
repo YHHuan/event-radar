@@ -62,7 +62,8 @@ class HighlightTests(unittest.TestCase):
         self.assertEqual(matching[0]["firstStart"][:10], "2026-10-09")
 
     def test_new_race_lens_requires_reviewed_selection(self):
-        event = copy.deepcopy(highlights.selected_events()[-1])
+        event = copy.deepcopy(next(item for item in highlights.selected_events()
+                                   if item["dedupe_key"] == "selected-challenge-taiwan-2027"))
         event.pop("_selection")
         event["title"] = "社區週末馬拉松"
         result = analyze_event(event, today=TODAY)

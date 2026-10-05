@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
@@ -12,6 +13,7 @@ from urllib.parse import urlparse
 from . import db
 from .config import PROJECT_ROOT, taste
 from .highlights import public_watchlist, selected_events
+from .source_network import cached_events, managed_source_names, public_sources
 from .taste import analyze_event, blended_score, normalized_image_url
 
 WEB_DIR = PROJECT_ROOT / "web"
@@ -89,13 +91,27 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
     prepared: list[dict] = []
     seen: set[tuple[str, str, str]] = set()
 
-    # Reviewed corrections take precedence over older database rows. Only these
-    # selections get the annual planning window; ordinary discovery stays near-term.
+    # Reviewed corrections take precedence over feeds and historical DB rows.
+    # Feed snapshots replace previous editions and expire after seven days.
     reviewed = selected_events()
-    reviewed_urls = {item["source_url"].rstrip("/") for item in reviewed}
-    candidates = reviewed + [item for item in _load_candidates(today, horizon_days)
-                             if not any((item.get(key) or "").rstrip("/") in reviewed_urls
-                                        for key in ("source_url", "ticket_url"))]
+    reviewed_urls = {(item["source_url"].rstrip("/"), item["first_start"][:4]) for item in reviewed}
+    def edition(item):
+        title = re.sub(r"[\W_]+", "", item.get("title", "")).replace("臺", "台").casefold()
+        return title, (item.get("first_start") or "")[:4]
+    reviewed_titles = {edition(item) for item in reviewed}
+    for item in reviewed:
+        reviewed_titles.update(edition({**item, "title": title})
+                               for title in item["_selection"].get("supersedes_titles", []))
+    def superseded(item):
+        return edition(item) in reviewed_titles or any(
+            ((item.get(key) or "").rstrip("/"), (item.get("first_start") or "")[:4]) in reviewed_urls
+            for key in ("source_url", "ticket_url"))
+    automatic = [item for item in cached_events(today=today) if not superseded(item)]
+    live_editions = {edition(item) for item in automatic}
+    managed = managed_source_names()
+    candidates = reviewed + automatic + [item for item in _load_candidates(today, horizon_days)
+                             if item.get("source_name") not in managed and not superseded(item)
+                             and edition(item) not in live_editions]
     for event in candidates:
         selection = event.get("_selection") or {}
         event_horizon = 365 if selection else horizon_days
@@ -156,6 +172,8 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                 "dateOnly": len(first["start"]) == 10,
                 "ongoing": first["start"][:10] < today.isoformat(),
                 "checkedOn": selection.get("checked_on", ""),
+                "automatic": bool(selection.get("automatic")),
+                "sharedSourceUrl": bool(selection.get("shared_url")),
                 "registrationNote": selection.get("registration_note", ""),
                 "venue": first["venue"],
                 "price": first["price"],
@@ -198,6 +216,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
         "publicUrl": PUBLIC_URL,
         "events": prepared,
         "watchlist": public_watchlist(),
+        "sourceNetwork": public_sources(today=today),
         "meta": {
             "count": len(prepared),
             "pickCount": sum(event["tier"] == "pick" for event in prepared),
@@ -236,6 +255,7 @@ def build(output: Path = DEFAULT_OUTPUT) -> dict:
         "generatedAt": data["generatedAt"],
         "tasteRevision": data["tasteRevision"],
         "counts": data["meta"],
+        "sourceNetwork": data["sourceNetwork"],
         "coverage": {
             "firstDate": min((event["firstStart"][:10] for event in data["events"]), default=""),
             "lastDate": max((event["firstStart"][:10] for event in data["events"]), default=""),

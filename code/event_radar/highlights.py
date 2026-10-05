@@ -80,5 +80,5 @@ def public_watchlist() -> list[dict]:
         "lens": item["lens"], "city": item.get("city", ""),
         "url": item["source_url"], "reason": item["selection_reason"],
         "checkedOn": item["checked_on"],
-        "status": "下一屆日期待確認",
+        "status": item.get("status", "下一屆日期待確認"),
     } for item in catalog().get("watchlist", [])]
