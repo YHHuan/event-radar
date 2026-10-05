@@ -254,6 +254,111 @@ try {
   if (preserved.length !== 1 || preserved[0].id !== 'retired-race') throw new Error('shared calendar replaced a saved race');
   await shared.close();
 
+  // Independent sessions must survive filters, reloads, favorites and ICS.
+  const series = { ...makeEvent('test-series', '大稻埕書店走讀（三場）', 'urban', '2026-10-17T15:00:00', '2026-11-14T17:00:00'),
+    url: 'https://example.com/bookstore', venue: '郭怡美書店', performanceCount: 3,
+    performances: ['2026-11-14', '2026-10-17', '2026-10-31'].map((day) => ({
+      start: `${day}T15:00:00`, end: `${day}T17:00:00`, venue: '郭怡美書店',
+    })) };
+  const mixed = { ...makeEvent('test-mixed', '日夜不同場次', 'urban', '2026-10-17T19:00:00', '2026-10-31T12:00:00'),
+    url: 'https://example.com/mixed', performanceCount: 2,
+    performances: [
+      { start: '2026-10-17T19:00:00', end: '2026-10-17T21:00:00' },
+      { start: '2026-10-31T10:00:00', end: '2026-10-31T12:00:00' },
+    ] };
+  const neighbor = { ...makeEvent('test-neighbor', '另一場活動', 'urban', '2026-10-31T18:00:00', '2026-10-31T20:00:00'),
+    url: 'https://example.com/neighbor' };
+  const span = { ...makeEvent('test-span', '連續展覽', 'urban', '2026-10-29', '2026-11-02'),
+    url: 'https://example.com/span' };
+  const sessionFixture = { ...fixture, events: [series, neighbor, mixed, span] };
+  const dates = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  dates.on('pageerror', (error) => errors.push(`dates: ${error.message}`));
+  await dates.route('**/events.json', (route) => route.fulfill({ json: sessionFixture }));
+  await dates.goto(`${base}?view=all`, { waitUntil: 'networkidle' });
+  await dates.locator('#toggle-filters').click();
+  await dates.locator('#when-filters [data-value="date"]').click();
+  await dates.locator('#date-from').fill('2026-10-31');
+  const ids = await dates.locator('.event-card').evaluateAll((cards) => cards.map((card) => card.dataset.id));
+  if (ids.join() !== 'test-span,test-mixed,test-series,test-neighbor') throw new Error(`matching-session order incorrect: ${ids}`);
+  await dates.locator('#search').fill('大稻埕');
+  const seriesCard = dates.locator('[data-id="test-series"]');
+  const sessionStarts = await seriesCard.locator('.event-session').evaluateAll((rows) => rows.map((row) => row.dataset.start));
+  if (sessionStarts.join() !== '2026-10-17T15:00:00,2026-10-31T15:00:00,2026-11-14T15:00:00') {
+    throw new Error('session list truncated or unsorted');
+  }
+  if (await seriesCard.locator('.event-session[data-matches="true"]').count() !== 1
+    || !(await seriesCard.locator('.event-card__date').textContent()).includes('10/31')) {
+    throw new Error('later session was not used in headline/filter');
+  }
+  if (!(await seriesCard.locator('.event-sessions').textContent()).includes('15:00–17:00')) throw new Error('session end time missing');
+  await dates.reload({ waitUntil: 'networkidle' });
+  if (await dates.locator('#date-from').inputValue() !== '2026-10-31'
+    || await dates.locator('.event-card').count() !== 1) throw new Error('exact date URL failed round trip');
+  await dates.locator('#date-from').fill('2026-10-24');
+  if (await dates.locator('.event-card').count()) throw new Error('gap between bookstore sessions became an event');
+  await dates.locator('#when-filters [data-value="range"]').click();
+  await dates.locator('#date-from').fill('2026-10-18');
+  await dates.locator('#date-to').fill('2026-11-14');
+  if (await seriesCard.locator('.event-session[data-matches="true"]').count() !== 2) throw new Error('inclusive range missed its last day');
+  await dates.reload({ waitUntil: 'networkidle' });
+  if (await dates.locator('#date-to').inputValue() !== '2026-11-14') throw new Error('range URL failed round trip');
+  const rangePromise = dates.waitForEvent('download');
+  await seriesCard.locator('button[data-action="calendar"]').click();
+  const rangeCalendar = await readFile(await (await rangePromise).path(), 'utf8');
+  if ((rangeCalendar.match(/BEGIN:VEVENT/g) || []).length !== 2
+    || rangeCalendar.includes('DTSTART;TZID=Asia/Taipei:20261017T150000')) throw new Error('calendar included a session outside the date range');
+  await dates.locator('#date-to').fill('2026-10-17');
+  if (!(await dates.locator('#date-error').isVisible()) || await dates.locator('.event-card').count()) throw new Error('reversed range silently returned events');
+  await dates.locator('#when-filters [data-value="date"]').click();
+  await dates.locator('#date-from').fill('2026-10-31');
+  await dates.locator('#clear-search').click();
+  await dates.locator('#period-filters [data-value="evening"]').click();
+  if (await dates.locator('.event-card').count() !== 1
+    || await dates.locator('.event-card').getAttribute('data-id') !== 'test-neighbor') {
+    throw new Error('date and evening filters matched different sessions');
+  }
+  await dates.locator('#period-filters [data-value="all"]').click();
+  await dates.locator('#when-filters [data-value="all"]').click();
+  await dates.locator('#search').fill('大稻埕');
+  const calendarPromise = dates.waitForEvent('download');
+  await seriesCard.locator('button[data-action="calendar"]').click();
+  const calendarDownload = await calendarPromise;
+  const calendar = (await readFile(await calendarDownload.path(), 'utf8')).replace(/\r\n /g, '');
+  if ((calendar.match(/BEGIN:VEVENT/g) || []).length !== 3
+    || !calendar.includes('DTEND;TZID=Asia/Taipei:20261017T170000')
+    || !calendar.includes('DTSTART;TZID=Asia/Taipei:20261114T150000')) throw new Error('ICS collapsed three sessions into one span');
+  const uidLines = calendar.split('\r\n').filter((line) => line.startsWith('UID:'));
+  if (new Set(uidLines).size !== 3) throw new Error('session calendar UIDs collide');
+  const singlePromise = dates.waitForEvent('download');
+  await seriesCard.locator('button[data-action="calendar-session"]').nth(1).click();
+  const singleCalendar = await readFile(await (await singlePromise).path(), 'utf8');
+  if ((singleCalendar.match(/BEGIN:VEVENT/g) || []).length !== 1
+    || !singleCalendar.includes('DTSTART;TZID=Asia/Taipei:20261031T150000')) throw new Error('individual session calendar used wrong date');
+  await seriesCard.locator('button[data-action="save"]').click();
+  await dates.reload({ waitUntil: 'networkidle' });
+  let savedSeries = await dates.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2')).items[0]);
+  if (savedSeries.performances.length !== 3) throw new Error('saved event lost later sessions');
+  // A saved series remains usable after the public feed no longer contains it.
+  sessionFixture.events = [];
+  await dates.goto(`${base}?view=saved&when=all`, { waitUntil: 'networkidle' });
+  if (await dates.locator('.event-session').count() !== 3) throw new Error('expired saved series lost its sessions');
+  await dates.locator('#toggle-filters').click();
+  await dates.locator('#when-filters [data-value="date"]').click();
+  await dates.locator('#date-from').fill('2026-11-14');
+  if (new URL(dates.url()).searchParams.get('view') !== 'saved'
+    || await dates.locator('.event-card').count() !== 1) throw new Error('date selector left favorites view');
+  for (const width of [390, 1440]) {
+    await dates.setViewportSize({ width, height: 1000 });
+    const size = await dates.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+    if (size[0] > size[1] + 1) throw new Error(`date controls overflow at ${width}`);
+    if (process.env.SCREENSHOT_DIR) await dates.screenshot({ path: resolve(process.env.SCREENSHOT_DIR, `sessions-${width}.png`), fullPage: true });
+  }
+  await dates.goto(`${base}?view=saved&when=date&date=2026-02-31`, { waitUntil: 'networkidle' });
+  if (!(await dates.locator('#date-error').isVisible()) || await dates.locator('.event-card').count()) throw new Error('invalid URL date rolled into another month');
+  await dates.locator('#reset-filters').click();
+  if (new URL(dates.url()).searchParams.has('date') || !(await dates.locator('#custom-dates').isHidden())) throw new Error('reset retained custom date');
+  await dates.close();
+
   const desktop = await checkViewport(1440, 1000, 'home-desktop');
   await desktop.close();
 

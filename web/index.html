@@ -73,11 +73,22 @@
       <div class="filters" id="filters" hidden>
         <div class="filter-group">
           <p>日期範圍</p>
-          <div class="chips" id="when-filters">
+          <div class="chips chips--wrap" id="when-filters">
             <button type="button" data-value="90" aria-pressed="true">90 天</button>
             <button type="button" data-value="7" aria-pressed="false">7 天</button>
             <button type="button" data-value="30" aria-pressed="false">30 天</button>
             <button type="button" data-value="all" aria-pressed="false">全部</button>
+            <button type="button" data-value="date" aria-pressed="false">指定日期</button>
+            <button type="button" data-value="range" aria-pressed="false">自訂區間</button>
+          </div>
+          <div class="date-inputs" id="custom-dates" hidden>
+            <label><span id="date-from-label">日期</span>
+              <input id="date-from" type="date" aria-describedby="date-error">
+            </label>
+            <label id="date-to-label" hidden>結束日期（含當天）
+              <input id="date-to" type="date" aria-describedby="date-error">
+            </label>
+            <p id="date-error" role="alert" hidden></p>
           </div>
         </div>
         <div class="filter-group">

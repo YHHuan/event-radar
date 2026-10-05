@@ -163,17 +163,24 @@ def collect() -> list[dict]:
         if not is_seed:
             if ev["city"] not in TARGET_CITIES:
                 continue
-            first = ev["performances"][0]["start_time"]
-            if first:
-                try:
-                    d = datetime.fromisoformat(first).date()
-                    if d < today or d > horizon:
-                        continue
-                except ValueError:
-                    pass
+            if not _overlaps_window(ev["performances"], today, horizon):
+                continue
         out.append(ev)
     print(f"  [accupass] -> {len(out)} events (台北/新北,未來90天) from {len(urls)} urls")
     return out
+
+
+def _overlaps_window(performances: list[dict], today: date, horizon: date) -> bool:
+    """A series remains discoverable after its first date, until its last session."""
+    for perf in performances:
+        try:
+            start = datetime.fromisoformat(perf.get("start_time") or "").date()
+            end = datetime.fromisoformat(perf.get("end_time") or perf["start_time"]).date()
+        except (ValueError, KeyError):
+            continue
+        if start <= horizon and end >= today:
+            return True
+    return False
 
 
 def _mark_inbox_parsed(url: str) -> None:

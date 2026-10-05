@@ -1,0 +1,13 @@
+# The organizer explicitly lists three sessions. Accupass JSON-LD only gives
+# the outer span; intervening days are not walks.
+schedules:
+  - source_url: https://www.accupass.com/event/2609130903502821300120
+    title: 書店走讀《由郭怡美出發：走訪大稻埕的六家書店》
+    checked_on: '2026-10-05'
+    performances:
+      - start_time: '2026-10-17T15:00:00'
+        end_time: '2026-10-17T17:00:00'
+      - start_time: '2026-10-31T15:00:00'
+        end_time: '2026-10-31T17:00:00'
+      - start_time: '2026-11-14T15:00:00'
+        end_time: '2026-11-14T17:00:00'
