@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from ..config import load_yaml
+from ..highlights import selected_events
 
 
 def collect() -> list[dict]:
@@ -38,4 +39,6 @@ def collect() -> list[dict]:
                 ],
             }
         )
-    return out
+    reviewed = selected_events()
+    urls = {item["source_url"] for item in reviewed}
+    return reviewed + [item for item in out if item.get("source_url") not in urls]

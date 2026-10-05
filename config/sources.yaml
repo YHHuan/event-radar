@@ -63,6 +63,10 @@ kktix:
     - { slug: thewall,      name: "The Wall 這牆音樂",  hint: "獨立音樂/livehouse" }   # 種子(目前 feed 較舊)
     - { slug: thewallmusic, name: "這牆音樂 THE WALL",   hint: "獨立音樂/後搖" }
     - { slug: spaceport,    name: "蓋婭娛樂 SPACEPORT", hint: "國際/獨立/嘻哈專場;HONNE 等" }  # 2026-05 加(HONNE 10週年)
+    - slug: vagabondfest
+      name: "浪人祭"
+      hint: "海邊音樂祭"
+      exclude_title_keywords: ["住宿", "淨灘", "周邊", "商品", "接駁"]
     # 待 Salmon 補:你常看的 livehouse / 喜劇品牌 / 後搖團主辦,例如
     # - { slug: <實際slug>, name: "Legacy Taipei", hint: "獨立音樂" }
 

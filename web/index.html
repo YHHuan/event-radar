@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f8f5">
-  <meta name="description" content="從公開藝文來源整理、依現場感與策展脈絡排序的個人活動雷達。">
+  <meta name="description" content="值得出門的藝文、音樂祭、台灣民俗與精選路跑三鐵，附主辦來源與年度追蹤。">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
   <title>有空｜活動雷達</title>
@@ -59,6 +59,15 @@
           <img src="icons/sliders-horizontal.svg" alt="" aria-hidden="true">
           <span>篩選</span><span class="filter-count" id="filter-count" hidden>0</span>
         </button>
+      </div>
+
+      <div class="discovery">
+        <div class="chips chips--wrap" id="discovery-filters" aria-label="全台主題精選">
+          <button type="button" data-value="music_festival" aria-pressed="false">音樂祭</button>
+          <button type="button" data-value="folk" aria-pressed="false">民俗祭典</button>
+          <button type="button" data-value="endurance" aria-pressed="false">路跑三鐵</button>
+        </div>
+        <span>全台值得專程去 · 可提早規劃一年</span>
       </div>
 
       <div class="filters" id="filters" hidden>
@@ -122,6 +131,11 @@
         </button>
       </div>
       <button class="load-more" id="load-more" type="button" hidden>顯示更多</button>
+    </section>
+    <section class="annual" id="annual-watchlist" aria-labelledby="annual-title" hidden>
+      <h2 id="annual-title">年度追蹤</h2>
+      <p>想去的經典活動先記下來。下一屆日期待確認，暫不列入日程。</p>
+      <div class="annual__list" id="watchlist-items"></div>
     </section>
   </main>
 

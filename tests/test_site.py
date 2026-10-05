@@ -60,7 +60,8 @@ class SiteTests(unittest.TestCase):
                 }],
             },
         ]
-        with patch.object(site, "_load_candidates", return_value=candidates):
+        with patch.object(site, "_load_candidates", return_value=candidates), \
+                patch.object(site, "selected_events", return_value=[]):
             result = site.snapshot(today=site.date(2026, 8, 30), max_events=10)
         self.assertEqual([event["id"] for event in result["events"]], ["safe"])
         self.assertEqual(result["events"][0]["tier"], "pick")

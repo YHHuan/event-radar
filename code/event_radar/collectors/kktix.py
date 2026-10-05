@@ -124,6 +124,9 @@ def collect() -> list[dict]:
         seen: set[tuple] = set()
         n = 0
         for entry in entries:
+            excluded = org.get("exclude_title_keywords", []) if isinstance(org, dict) else []
+            if any(word.casefold() in (entry.get("title") or "").casefold() for word in excluded):
+                continue
             ev = _entry_to_event(entry, slug)
             if not ev:
                 continue

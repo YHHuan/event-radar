@@ -3,7 +3,7 @@
 # Categories answer "what is it?". Facets answer "why is it worth leaving home?".
 # Facets are scored at most once each so verbose listings cannot inflate relevance.
 
-revision: "2026-08-30-v3"
+revision: "2026-10-05-v4"
 model_score_max_age_days: 21
 primary_cities: ["台北市", "新北市"]
 nearby_cities: ["桃園市", "基隆市"]
@@ -42,6 +42,16 @@ observed_examples:
     note: "戶外場域和集體現場感。"
 
 lenses:
+  music_festival:
+    label: "音樂祭"
+    keywords: ["音樂祭", "音樂節", "浪人祭", "大港開唱", "搖滾祭"]
+  folk:
+    label: "民俗祭典"
+    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗祭典"]
+  endurance:
+    label: "路跑三鐵"
+    reviewed_only: true
+    keywords: ["馬拉松", "三鐵", "鐵人三項", "越野跑", "ironman", "challenge taiwan"]
   live_music:
     label: "音樂現場"
     keywords: ["演唱會", "音樂會", "音樂節", "live", "livehouse", "live house", "樂團", "巡演", "專場", "發片", "爵士", "jazz", "dj", "搖滾", "後搖", "indie", "嘻哈", "演奏"]
@@ -79,7 +89,11 @@ facets:
   curated:
     label: "策展脈絡"
     weight: 14
-    keywords: ["策展", "藝術節", "音樂節", "影展", "電影節", "回顧展", "主題展", "選片", "映後座談", "單元", "策畫", "curated", "festival"]
+    keywords: ["策展", "藝術節", "音樂節", "音樂祭", "影展", "電影節", "回顧展", "主題展", "選片", "映後座談", "單元", "策畫", "curated", "festival"]
+  folk_culture:
+    label: "地方民俗"
+    weight: 14
+    keywords: ["遶境", "繞境", "進香", "蜂炮", "王船祭", "迎王", "暗訪", "民俗祭典"]
   place:
     label: "場域成為體驗"
     weight: 11
