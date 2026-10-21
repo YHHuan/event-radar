@@ -7,7 +7,7 @@ const STORAGE = {
 };
 const PAGE_SIZE = 18;
 const MAX_SAVED = 200;
-const LENS_ORDER = ["music_festival", "folk", "endurance", "live_music", "theatre_dance", "film", "market_festival", "exhibition", "nature", "urban", "talks"];
+const LENS_ORDER = ["indie_music", "music_festival", "folk", "endurance", "live_music", "theatre_dance", "film", "market_festival", "exhibition", "nature", "urban", "talks"];
 
 const initialSaved = readSavedRecords();
 

@@ -1,6 +1,37 @@
 # Public source network. "manual" means a useful window, never a claimed feed.
 # Date corrections live in highlights.yaml and override matching feed editions.
 sources:
+  - id: indievox
+    name: iNDIEVOX
+    mode: automatic
+    kind: indievox
+    url: https://www.indievox.com/activity
+    endpoint: https://www.indievox.com/activity
+    max_pages: 32
+    max_details: 180
+    horizon_days: 120
+    lenses: [indie_music, live_music, music_festival]
+    note: 全台獨立音樂與 livehouse；跟隨「顯示更多」，收未來 120 天，僅起訖日期的節目另提示場次待確認。
+  - id: fansi
+    name: FANSI GO
+    mode: automatic
+    kind: fansi
+    url: https://go.fansi.me/allevents
+    max_details: 100
+    horizon_days: 120
+    lenses: [indie_music, live_music, music_festival]
+    note: 主辦公開售票節目；巡演各站分別保留日期、時間與場地，排除未公開節目、商品與二手票。
+  - id: streetvoice
+    name: StreetVoice 街聲
+    mode: automatic
+    kind: streetvoice
+    url: https://streetvoice.com/gigs/all/0/
+    endpoint: https://streetvoice.com/gigs/all/0/
+    max_pages: 16
+    max_details: 180
+    horizon_days: 120
+    lenses: [indie_music, live_music, music_festival]
+    note: 街聲演出活動，補小場館、免費演出與新團；依公開場次與行事曆核對台灣時間，連回主辦售票頁。
   - id: tourism
     name: 觀光署活動開放資料
     mode: automatic
@@ -118,6 +149,12 @@ sources:
     url: https://partystar.media/fest
     lenses: [music_festival]
     note: 音樂祭媒體索引用來補漏，日期仍回查主辦公告。
+  - id: blow-music
+    name: Blow 吹音樂｜音樂節與現場
+    mode: manual
+    url: https://blow.streetvoice.com/c/headline/events/
+    lenses: [indie_music, live_music, music_festival]
+    note: 補音樂祭、海外獨立團來台與主辦消息；新聞是發現線索，場次仍以主辦公告為準。
   - id: runners
     name: 跑者廣場全國賽會
     mode: manual

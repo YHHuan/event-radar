@@ -151,7 +151,7 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
         score -= 24
     if hard_negative:
         score = 0
-    elif selection and not soft_negative:
+    elif selection and not selection.get("catalog") and not soft_negative:
         score = max(score, 76)
 
     score = max(0, min(100, round(score)))

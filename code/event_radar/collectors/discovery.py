@@ -18,6 +18,7 @@ from ..config import load_yaml
 from ..normalize import clean_text, detect_city
 from ..source_network import record_result, cached_events
 from .kktix import _entry_to_event
+from . import independent_music
 
 FOLK = re.compile(r"民俗|遶境|繞境|進香|蜂炮|迎王|王船|夜祭|太祖祭|義民|萬年季|跑水節|偶戲節|收冬祭|豐年祭|豐年節|平安鹽祭|迎城隍|迎媽祖|搶孤")
 MUSIC = re.compile(r"音樂祭|音樂節|大港開唱|浮現祭|浪人祭|火球祭|打狗祭|搖滾台中|PASIWALI", re.I)
@@ -281,6 +282,8 @@ class TourismTLSAdapter(HTTPAdapter):
 
 
 def fetch(source: dict, today: date) -> list[dict]:
+    if source["kind"] in independent_music.KINDS:
+        return independent_music.fetch(source, today)
     with requests.Session() as session:
         session.headers["User-Agent"] = "Mozilla/5.0 (event-radar; public event discovery)"
         session.mount("https://media.taiwan.net.tw/", TourismTLSAdapter())

@@ -5,7 +5,6 @@ from .curated import collect as curated_collect
 from .discovery import collect as discovery_collect
 from .era_kham import collect as era_kham_collect
 from .eventbrite import collect as eventbrite_collect
-from .indievox import collect as indievox_collect
 from .kktix import collect as kktix_collect
 from .opentix import collect as opentix_collect
 from .tixcraft import collect as tixcraft_collect
@@ -17,7 +16,6 @@ COLLECTORS = {
     "opentix": opentix_collect,
     "kktix": kktix_collect,
     "accupass": accupass_collect,
-    "indievox": indievox_collect,
     "tixcraft": tixcraft_collect,
     "era_kham": era_kham_collect,
     "eventbrite": eventbrite_collect,

@@ -109,6 +109,8 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
             ((item.get(key) or "").rstrip("/"), (item.get("first_start") or "")[:4]) in reviewed_urls
             for key in ("source_url", "ticket_url"))
     automatic = [item for item in cached_events(today=today) if not superseded(item)]
+    priority_ids = {item.get("dedupe_key") for item in reviewed + automatic
+                    if not item.get("_selection", {}).get("catalog")}
     live_editions = {edition(item) for item in automatic}
     managed = managed_source_names()
     candidates = reviewed + automatic + [item for item in _load_candidates(today, horizon_days)
@@ -205,7 +207,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
         )
 
     # Reserve space for the bounded reviewed catalog even on busy concert weeks.
-    prepared.sort(key=lambda event: (not bool(event["checkedOn"]), -event["score"], event["firstStart"], event["title"]))
+    prepared.sort(key=lambda event: (event["id"] not in priority_ids, -event["score"], event["firstStart"], event["title"]))
     prepared = prepared[:max_events]
     prepared.sort(key=lambda event: (-event["score"], event["firstStart"], event["title"]))
     source_counts = Counter(event["source"] for event in prepared)
