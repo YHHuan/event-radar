@@ -9,7 +9,7 @@ category from why it may be worth leaving home for: live presence, curatorial
 context, place, limited context, scene culture, wandering, participation and
 urban nature.
 
-The **音樂祭 / 民俗祭典 / 路跑三鐵** shortcuts show Taiwan-wide selections,
+The **獨立現場 / 音樂祭 / 民俗祭典 / 路跑三鐵** shortcuts show Taiwan-wide selections,
 including announced events up to a year ahead. Races are selected for their scale,
 distinctive route or local culture; merely mentioning a marathon does not qualify.
 Multi-day events remain visible until their last day. **年度追蹤** holds undated
@@ -77,7 +77,9 @@ Most ticketing sites are JS-rendered, but two patterns cover almost everything:
 | 文化部 iCulture | Official arts/music/theatre/dance/exhibits | Open-data JSON API |
 | OPENTIX (兩廳院) | Formal theatre, dance, musicals, film festivals | SSR listing → JSON-LD |
 | KKTIX | Indie music, comedy, international concerts | Organizer `*.kktix.cc/events.json` |
-| iNDIEVOX | Independent music / post-rock / livehouse | SSR listing |
+| iNDIEVOX | Taiwan-wide independent gigs and livehouses | Public load-more listing → dated show details |
+| FANSI GO | Independent gigs, tours and small venues | Anonymous public event list → EventSeries sessions |
+| StreetVoice 街聲 | New bands, small venues, free and festival shows | Paginated gigs → visible date + local calendar |
 | 拓元 tixcraft | International concerts, big expos | SSR listing |
 | 年代售票 | Large concerts | listing → detail |
 | Accupass | Markets, real-life library, city walks, food/workshops | SSR search by keyword → JSON-LD |
@@ -88,10 +90,34 @@ Most ticketing sites are JS-rendered, but two patterns cover almost everything:
 | Festival organizers | 浮現、光球、PIPE、浪人祭、高流 | Public KKTIX organizer feeds; festival titles only |
 | Event Radar 精選 | Small, user-supplied gaps with verified public dates | Reviewed YAML + public source URL |
 
-The **活動情報站** directory is maintained in `config/discovery.yaml`. Its eight
+The **活動情報站** directory is maintained in `config/discovery.yaml`. Its eleven
 automatic endpoints run in the existing daily refresh. Religion calendars,
 organizer sites, official Facebook pages and media indexes are labeled **人工追蹤**;
-they are discovery windows, not claimed social-media integrations.
+they are discovery windows, not claimed social-media integrations. Blow 吹音樂
+is included as a manual discovery window for festival and independent music news.
+
+The three music calendars run in `discovery` on the existing daily schedule, with
+a 120-day horizon, per-source page/detail budgets, one request per second and
+bounded responses. iNDIEVOX follows its actual **顯示更多** cursor; `?page=` does
+not paginate that site. It now covers Taiwan rather than only Taipei/New Taipei.
+FANSI's public publication date is honored, and only event data is queried;
+merchandise, test/unpublished releases and the resale marketplace are excluded.
+Its individual tour stops retain their own dates, cities and times. StreetVoice
+uses its visible local date and calendar link: its naive JSON-LD time can be
+eight hours earlier, and must not be interpreted as local show time.
+
+Matching ticket pages merge into one card while preserving explicit occurrences.
+When StreetVoice and the ticket page disagree about a same-day time, the ticket
+page takes precedence and the card shows a discrepancy note. Admission is not a
+second show. An outer date span never implies daily performances; date-only
+listings retain their precision and show a schedule caveat. Music catalog items
+receive the normal taste ranking, without the reviewed selection score floor or
+reserved slots, so a large music feed does not displace all other interests.
+
+Music budgets or unexpected page schemas fail the source refresh visibly and
+retain the previous snapshot under the same seven-day fallback. These are
+personal public calendar collectors, not official partner integrations; ticket
+availability and changes still need confirmation on the linked organizer page.
 
 Discovery snapshots live in `discovery_snapshots` in the existing SQLite database.
 Successful refreshes replace a source's previous set, including an empty future
@@ -126,6 +152,7 @@ bash setup.sh
 # 2. collect + rule-filter into data/events.db
 PYTHONPATH=code .venv/bin/python -m event_radar.pipeline          # all sources
 PYTHONPATH=code .venv/bin/python -m event_radar.pipeline --only culture_tw opentix
+PYTHONPATH=code .venv/bin/python -m event_radar.pipeline --only discovery # music + festival/folk/race feeds
 
 # 3. open the front-end (idempotent: opens browser; starts server if needed)
 bash run.sh        # → http://localhost:8501

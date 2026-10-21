@@ -71,6 +71,18 @@ async function checkViewport(width, height, label) {
 try {
   const mobile = await checkViewport(390, 844, 'home-mobile');
 
+  await mobile.locator('#discovery-filters [data-value="indie_music"]').click();
+  if (new URL(mobile.url()).searchParams.get('lens') !== 'indie_music') throw new Error('indie shortcut is not shareable');
+  const indieData = JSON.parse(await readFile(resolve(site, 'events.json'), 'utf8'));
+  const indieIds = new Set(indieData.events.filter((e) => e.lenses.some((l) => l.key === 'indie_music')).map((e) => e.id));
+  const visibleIndieIds = await mobile.locator('.event-card').evaluateAll((cards) => cards.map((c) => c.dataset.id));
+  if (!visibleIndieIds.length || visibleIndieIds.some((id) => !indieIds.has(id))) throw new Error('indie shortcut contains unrelated events');
+  const sourceLabels = await mobile.locator('#source-items a').allTextContents();
+  for (const name of ['iNDIEVOX', 'FANSI GO', 'StreetVoice 街聲']) {
+    if (!sourceLabels.includes(name)) throw new Error(`missing music source ${name}`);
+  }
+  await mobile.locator('#discovery-filters [data-value="indie_music"]').click();
+
   await mobile.locator('#search').fill('台北蚤之市');
   await mobile.locator('.event-card').first().waitFor({ state: 'visible' });
   if (await mobile.locator('.event-card').count() !== 1) throw new Error('search did not narrow to one event');

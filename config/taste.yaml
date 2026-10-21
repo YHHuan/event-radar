@@ -3,7 +3,7 @@
 # Categories answer "what is it?". Facets answer "why is it worth leaving home?".
 # Facets are scored at most once each so verbose listings cannot inflate relevance.
 
-revision: "2026-10-05-v5"
+revision: "2026-10-21-v6"
 model_score_max_age_days: 21
 primary_cities: ["台北市", "新北市"]
 nearby_cities: ["桃園市", "基隆市"]
@@ -42,6 +42,9 @@ observed_examples:
     note: "戶外場域和集體現場感。"
 
 lenses:
+  indie_music:
+    label: "獨立現場"
+    keywords: ["獨立音樂", "indie", "後搖", "livehouse", "live house"]
   music_festival:
     label: "音樂祭"
     keywords: ["音樂祭", "音樂節", "浪人祭", "大港開唱", "浮現祭", "火球祭", "打狗祭", "搖滾祭", "PASIWALI"]

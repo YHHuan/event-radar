@@ -6,7 +6,10 @@ Failures retain at most seven days of data and expose freshness to the reader.
 from __future__ import annotations
 
 import json
+import copy
+import re
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 from . import db
 from .config import load_yaml
@@ -58,6 +61,76 @@ def cached_events(*, today: date | None = None) -> list[dict]:
             event["_selection"]["checked_on"] = row["succeeded_at"][:10]
             event["_selection"]["source_id"] = source["id"]
             out.append(event)
+    return merge_music_catalogs(out)
+
+
+def merge_music_catalogs(events: list[dict]) -> list[dict]:
+    """Coalesce matching ticket pages, retaining every explicit session.
+
+    Generic calendars and social profile links are not event identifiers. For
+    those, only the same series title (optionally ending in an occurrence date)
+    and city can merge. Existing reviewed selections are untouched.
+    """
+    def base_title(event):
+        title = re.sub(r"\s*[-－—｜|]?\s*\d{1,2}/\d{1,2}\s*$", "", event["title"])
+        return re.sub(r"[\W_]+", "", title).replace("臺", "台").casefold()
+
+    def ticket_key(event):
+        url = event.get("ticket_url") or ""
+        parsed = urlparse(url)
+        if re.search(r"/(?:activity/detail|events|event|gigs)/[\w-]+/?$", parsed.path):
+            return (parsed.hostname or "").removeprefix("www.") + parsed.path.rstrip("/")
+        return ""
+
+    def same_venue(a, b):
+        def key(value):
+            return re.sub(r"[\W_]+", "", re.split(r"[（(]", value or "")[0]).casefold()
+        left, right = key(a.get("venue_name")), key(b.get("venue_name"))
+        return bool(left and right and (left in right or right in left))
+
+    out = []
+    for original in events:
+        item = copy.deepcopy(original)
+        if not item.get("_selection", {}).get("catalog"):
+            out.append(item)
+            continue
+        match = next((other for other in out if other.get("_selection", {}).get("catalog") and
+                      ((ticket_key(item) and ticket_key(other) == ticket_key(item)) or
+                       (base_title(other) == base_title(item) and other.get("city") == item.get("city")))), None)
+        if match is None:
+            out.append(item)
+            continue
+        perfs = match["performances"]
+        for perf in item["performances"]:
+            # Community listings sometimes use admission time while the ticket
+            # page uses show time. A discrepancy is not an additional show.
+            official = (match.get("source_name") in {"iNDIEVOX", "FANSI GO"}
+                        and item.get("source_name") == "StreetVoice 街聲"
+                        and ((ticket_key(match) == ticket_key(item) and ticket_key(item))
+                             or (base_title(match) == base_title(item)
+                                 and any(same_venue(p, perf) for p in perfs))))
+            authoritative = [p for p in perfs if p["start_time"][:10] == perf["start_time"][:10]
+                             and p.get("city") == perf.get("city")] if official else []
+            if authoritative and all(len(p["start_time"]) > 10 for p in authoritative):
+                if not any(p["start_time"] == perf["start_time"] for p in authoritative):
+                    match["_selection"]["registration_note"] = "來源時間有差異；此卡依售票頁，出發前請再確認。"
+                continue
+            same = next((p for p in perfs if p["start_time"][:10] == perf["start_time"][:10]
+                         and p.get("city") == perf.get("city")
+                         and same_venue(p, perf)
+                         and (p["start_time"] == perf["start_time"] or
+                              len(p["start_time"]) == 10 or len(perf["start_time"]) == 10)), None)
+            if same is None:
+                perfs.append(perf)
+            else:
+                if len(same["start_time"]) == 10 and len(perf["start_time"]) > 10:
+                    same["start_time"] = perf["start_time"]
+                for key in ("end_time", "venue_name", "venue_address", "price_text"):
+                    same[key] = same.get(key) or perf.get(key)
+        perfs.sort(key=lambda p: (p["start_time"], p["venue_name"]))
+        match["first_start"] = perfs[0]["start_time"]
+        # A separate daily card should not label the merged series as day one.
+        match["title"] = re.sub(r"\s*[-－—｜|]?\s*\d{1,2}/\d{1,2}\s*$", "", match["title"])
     return out
 
 

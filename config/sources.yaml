@@ -70,10 +70,8 @@ kktix:
     # 待 Salmon 補:你常看的 livehouse / 喜劇品牌 / 後搖團主辦,例如
     # - { slug: <實際slug>, name: "Legacy Taipei", hint: "獨立音樂" }
 
-# ── iNDIEVOX:獨立音樂售票平台(後搖/獨立/livehouse/發片專場主場) ──
-# /activity 列表 SSR,robots 允許。自動發現,不需名單。
-indievox:
-  enabled: true
+# iNDIEVOX、FANSI GO、StreetVoice 由 config/discovery.yaml 管理，
+# 隨 discovery 一起更新，保留來源新鮮度與失敗狀態。
 
 # ── 拓元 tixcraft:國際演唱會/世貿大型展/大型音樂活動。/activity SSR,自動發現。──
 tixcraft:
