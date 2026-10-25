@@ -7,7 +7,9 @@ sources:
     kind: indievox
     url: https://www.indievox.com/activity
     endpoint: https://www.indievox.com/activity
-    max_pages: 32
+    # Load-more pages are date groups, often containing just one event. Cover
+    # the 120-day window plus termination while retaining a finite guardrail.
+    max_pages: 128
     max_details: 180
     horizon_days: 120
     lenses: [indie_music, live_music, music_festival]
