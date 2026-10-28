@@ -83,11 +83,17 @@ try {
   }
   await mobile.locator('#discovery-filters [data-value="indie_music"]').click();
 
-  await mobile.locator('#search').fill('台北蚤之市');
+  // Real events expire. Search a card from this build's visible catalog instead
+  // of making the daily deployment depend on one particular event remaining.
+  const searchTargetId = await mobile.locator('.event-card').first().getAttribute('data-id');
+  const searchTarget = indieData.events.find((event) => event.id === searchTargetId);
+  if (!searchTarget?.title) throw new Error('visible search target is missing from the snapshot');
+  await mobile.locator('#search').fill(searchTarget.title);
   await mobile.locator('.event-card').first().waitFor({ state: 'visible' });
-  if (await mobile.locator('.event-card').count() !== 1) throw new Error('search did not narrow to one event');
-  if (!(await mobile.locator('.event-card h3').textContent()).includes('台北蚤之市')) throw new Error('search returned wrong event');
-  if (!new URL(mobile.url()).searchParams.get('q')) throw new Error('search state is not shareable');
+  const searchIds = await mobile.locator('.event-card').evaluateAll((cards) => cards.map((card) => card.dataset.id));
+  // Multiple dates/venues can legitimately share a title; retain the selected ID.
+  if (!searchIds.includes(searchTargetId)) throw new Error('search lost the selected current event');
+  if (new URL(mobile.url()).searchParams.get('q') !== searchTarget.title) throw new Error('search state is not shareable');
 
   await mobile.locator('#clear-search').click();
   await mobile.locator('#toggle-filters').click();
@@ -212,6 +218,16 @@ try {
   discovery.on('pageerror', (error) => errors.push(`discovery: ${error.message}`));
   await discovery.route('**/events.json', (route) => route.fulfill({ json: fixture }));
   await discovery.goto(base, { waitUntil: 'networkidle' });
+  // Exact filtering and no-result behavior use fixed-date data, so removing an
+  // expired public listing cannot disable these assertions or block publishing.
+  await discovery.locator('#search').fill('媽祖遶境');
+  if (await discovery.locator('.event-card').count() !== 1
+    || await discovery.locator('.event-card').getAttribute('data-id') !== 'test-folk') {
+    throw new Error('fixture search did not narrow to the matching event');
+  }
+  await discovery.locator('#search').fill('不存在的測試活動');
+  if (await discovery.locator('.event-card').count() !== 0) throw new Error('unmatched search returned events');
+  await discovery.locator('#clear-search').click();
   await discovery.locator('#source-title').click();
   if (await discovery.locator('#source-items article').count() !== 3) throw new Error('source directory lost entries or accepted an unsafe URL');
   if (!(await discovery.locator('#source-items').textContent()).includes('更新失敗')) throw new Error('source failure was hidden');
