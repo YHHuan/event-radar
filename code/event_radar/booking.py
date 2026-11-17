@@ -56,6 +56,9 @@ def action(value, today, *, now=None):
         return result.astimezone(ZoneInfo("Asia/Taipei")).replace(tzinfo=None) if result.tzinfo else result
     if now and now.tzinfo:
         now = now.astimezone(ZoneInfo("Asia/Taipei")).replace(tzinfo=None)
+    finish = value.get("registration_end")
+    if finish and (local(finish).date() < today or (now and len(finish) > 10 and local(finish) < now)):
+        return "", None
     deadlines = []
     for key, label in (("early_bird_end", "早鳥截止"), ("registration_end", "報名截止")):
         if value.get(key):
@@ -67,9 +70,6 @@ def action(value, today, *, now=None):
     if deadlines:
         stamp, label = min(deadlines)
         return label + " " + stamp.replace("T", " "), stamp
-    finish = value.get("registration_end")
-    if finish and (local(finish).date() < today or (now and len(finish) > 10 and local(finish) < now)):
-        return "", None
     start = value.get("sale_start")
     if start and (local(start).date() > today or (now and len(start) > 10 and local(start) > now)):
         return "開賣 " + start.replace("T", " "), start
