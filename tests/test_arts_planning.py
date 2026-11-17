@@ -117,6 +117,8 @@ class PlanningTests(unittest.TestCase):
     def test_registration_closes_at_its_announced_clock_even_today(self):
         value = {"checked_on": "2026-11-17", "registration_end": "2026-11-17T12:00:00+08:00"}
         self.assertEqual(booking.action(value, TODAY, now=datetime(2026, 11, 17, 14)), ("", None))
+        value["checked_on"] = "2026-10-01"
+        self.assertEqual(booking.action(value, TODAY, now=datetime(2026, 11, 17, 14)), ("", None))
         value = {"checked_on": "2026-11-17", "early_bird_end": "2026-11-17T12:00:00", "sale_start": "2026-11-10"}
         text, when = booking.action(value, TODAY, now=datetime(2026, 11, 17, 14))
         self.assertNotIn("早鳥截止", text)
