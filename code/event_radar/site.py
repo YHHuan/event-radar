@@ -10,7 +10,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from . import db
+from . import booking, db
 from .config import PROJECT_ROOT, taste
 from .highlights import public_watchlist, selected_events
 from .schedules import reviewed_schedules, with_reviewed_schedule
@@ -119,7 +119,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
     for event in candidates:
         event = with_reviewed_schedule(event, schedules)
         selection = event.get("_selection") or {}
-        event_horizon = 365 if selection else horizon_days
+        event_horizon = booking.horizon(event, horizon_days)
         analysis = analyze_event(event, today=today)
         rank, rank_mode = blended_score(event, analysis)
         if analysis["decision"] == "drop" or rank < 38:
@@ -185,6 +185,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
                 "automatic": bool(selection.get("automatic")),
                 "sharedSourceUrl": bool(selection.get("shared_url")),
                 "registrationNote": selection.get("registration_note", ""),
+                "booking": booking.public(event),
                 "venue": first["venue"],
                 "price": first["price"],
                 "performances": performances,
@@ -221,7 +222,7 @@ def snapshot(*, today: date | None = None, horizon_days: int = 120, max_events: 
         "generatedAt": generated_at,
         "today": today.isoformat(),
         "horizonDays": horizon_days,
-        "planningHorizonDays": 365,
+        "planningHorizonDays": 730,
         "tasteRevision": cfg.get("revision"),
         "publicUrl": PUBLIC_URL,
         "events": prepared,

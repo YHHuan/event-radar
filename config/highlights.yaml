@@ -260,6 +260,19 @@ events:
     - 2026 Takao Rock 打狗祭
     registration_note: 此卡為 10/10–11 免費舞台；10/10 海音館專場及 10/31 未來趴另售票。
 
+  - id: nccu-jinyong-2026
+    title: 第十七屆金勇影展《漫放》
+    lens: film
+    source_name: 政大影音實驗室
+    source_url: https://avlab.nccu.edu.tw/PageDoc/Detail?fid=11304&id=42657
+    checked_on: '2026-11-17'
+    start_time: '2026-11-29'
+    end_time: '2026-11-29'
+    city: 台北市
+    venue: 政大傳院劇場
+    selection_reason: 學生影像創作的展映窗口，可看看新銳創作者如何把生活經驗轉成影像。
+    registration_note: 官方已公告日期與場地；時刻、入場及校外觀眾參加方式待主辦補充。
+
 watchlist:
   - id: yanshui-next
     title: "鹽水蜂炮"
@@ -314,3 +327,27 @@ watchlist:
     checked_on: '2026-10-05'
     selection_reason: 多日環島跑的特殊挑戰；1045 公里版本與目前索引的火車站版本尚待核對，不混用不同屆次的日期與里程。
     status: 屆次、里程與日期待確認
+  - id: ntu-next
+    title: 臺大電影節下一檔
+    lens: film
+    city: 台北市
+    source_url: https://moviefest.ntusa.ntu.edu.tw/
+    checked_on: '2026-11-17'
+    selection_reason: 大學策展、映後交流與學生創作，留意對校外開放的場次。
+    status: 目前11月主題影展已收錄；下一檔日期待公告
+  - id: nccu-next
+    title: 政大電影節下一屆
+    lens: film
+    city: 台北市
+    source_url: https://linktr.ee/nccu_filmfest
+    checked_on: '2026-11-17'
+    selection_reason: 大學策展、映後交流與學生創作，留意對校外開放的場次。
+    status: 2026春季已結束；下一屆日期待公告
+  - id: ntnu-current
+    title: 臺師大人文電影節
+    lens: film
+    city: 台北市
+    source_url: https://www.instagram.com/ntnuhff/
+    checked_on: '2026-11-17'
+    selection_reason: 大學策展、映後交流與學生創作，留意對校外開放的場次。
+    status: 追蹤當屆公告；逐場時間尚待官方核對

@@ -164,7 +164,8 @@ def analyze_event(ev: dict[str, Any], *, today: date | None = None) -> dict[str,
 
     ranked_facets = sorted(facets, key=lambda item: item["weight"], reverse=True)
     reason = selection.get("selection_reason") or _reason(ranked_facets, lenses, city, cfg, signatures)
-    horizon = 365 if selection else 120
+    from .booking import horizon as planning_horizon
+    horizon = planning_horizon(ev)
     if hard_negative or (days is not None and (days < 0 or days > horizon)):
         decision = "drop"
     elif not (start and venue and public_url) or soft_negative or score < 34:

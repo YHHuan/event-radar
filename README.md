@@ -119,6 +119,27 @@ retain the previous snapshot under the same seven-day fallback. These are
 personal public calendar collectors, not official partner integrations; ticket
 availability and changes still need confirmation on the linked organizer page.
 
+Campus and museum calendars now include NTU Movie Festival (official film data),
+NCCU Arts Center (each explicit session), Fubon Art Museum, Taipei Fine Arts Museum,
+and Taichung Art Museum / Green Museumbrary. NTNU Humanist Film Festival, NCCU Film
+Festival, Jin-Yong Film Festival and NTCH seasons have separately labeled official
+windows when no dependable structured schedule is available. An undated window
+never acquires a guessed screening date or next-edition year.
+
+OPENTIX planning reads each published Event session and announced sale date, with
+at most 24 public detail reads per refresh. Selected booking announcements may
+reach 730 days ahead. Exhibition spans are ranges, with closure/reservation notes;
+film durations are not invented post-talk end times. JSON-LD stock flags are not
+live seat counts. `booking_reviews.yaml` keeps separately verified early-bird and
+registration deadlines with their original check date; a routine listing refresh
+does not make an old deadline newly verified.
+
+The private A-Ke report consumes `recommendations.plan`: a near-term section and
+an advance-planning section, including imminent deadlines even for near events.
+It respects local hidden feedback and can take explicit private interest keywords.
+Website hearts still stay in each browser; no cross-device collection or automatic
+preference inference has been enabled by this change.
+
 Discovery snapshots live in `discovery_snapshots` in the existing SQLite database.
 Successful refreshes replace a source's previous set, including an empty future
 calendar. Failures keep the last success for at most seven days and show the failure
@@ -194,7 +215,7 @@ PYTHONPATH=code .venv/bin/python -m event_radar.scoring apply    # write scores 
 - **`config/profile.yaml`** — your taste: positive/negative keywords, regions, weights, and `credit_cards.mine`. This is what makes recommendations *yours*; edit it freely.
 - **`config/taste.yaml`** — the current experience facets, observed examples and model-score freshness policy.
 - **`config/curated_events.yaml`** — a small reviewed supplement for public events missed by automatic discovery.
-- **`config/highlights.yaml`** — sourced festival/race selections and undated annual interests. Each entry has an explicit reason and check date. Reviewed values override stale collector rows with the same source URL; normal listings keep the 120-day window while these selections can extend to 365 days.
+- **`config/highlights.yaml`** — sourced festival/race selections and undated annual interests. Each entry has an explicit reason and check date. Reviewed values override stale collector rows with the same source URL; normal listings keep the 120-day window while these selections can extend to 365 days (730 with booking provenance).
 - **`config/sources.yaml`** — which sources are enabled, KKTIX organizer slugs, Accupass search keywords, etc.
 
 ---
