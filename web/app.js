@@ -113,6 +113,7 @@ function favoriteSnapshot(event, savedAt = new Date().toISOString()) {
     automatic: Boolean(event.automatic),
     sharedSourceUrl: Boolean(event.sharedSourceUrl),
     registrationNote: event.registrationNote || "",
+    booking: event.booking || {},
     venue: event.venue || "",
     price: event.price || "",
     performances: eventPerformances(event),
@@ -485,6 +486,26 @@ function makeCard(event) {
     const note = document.createElement("p");
     note.className = "event-card__notice";
     note.textContent = event.registrationNote;
+    middle.append(note);
+  }
+  if (event.booking && Object.keys(event.booking).length) {
+    const b = event.booking;
+    const note = document.createElement("p");
+    note.className = "event-card__notice";
+    const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
+    const fresh = b.checked_on && b.checked_on <= today && (new Date(today) - new Date(b.checked_on)) <= 7 * 86400000;
+    const future = stamp => stamp && (stamp.length === 10 ? stamp >= today
+      : new Date(/[Zz]|[+-]\d\d:\d\d$/.test(stamp) ? stamp : `${stamp}+08:00`) >= new Date());
+    const deadlines = [[b.early_bird_end, "早鳥截止"], [b.registration_end, "報名截止"]]
+      .filter(([stamp]) => future(stamp)).sort(([a], [c]) => a.localeCompare(c));
+    const when = value => value.replace("T", " ").slice(0, 16);
+    let text = b.note || "展期已公告；購票與預約請查官方頁";
+    if (!fresh) text = "購票資訊待重新確認";
+    else if (b.status === "sold_out" || b.status === "closed") text = "已額滿或截止；請查主辦異動";
+    else if (deadlines.length) text = `${deadlines[0][1]} ${when(deadlines[0][0])}`;
+    else if (b.registration_end && !future(b.registration_end)) text = "公告報名期限已過；請查主辦異動";
+    else if (b.sale_start) text = future(b.sale_start) ? `開賣 ${when(b.sale_start)}` : "已到公告開賣日；票況請查售票頁";
+    note.textContent = `${text}（核對 ${b.checked_on || "待確認"}）`;
     middle.append(note);
   }
   const tags = document.createElement("div");

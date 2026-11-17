@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 
 from .config import load_yaml
 
-LENSES = {"music_festival": "音樂祭", "folk": "民俗祭典", "endurance": "路跑三鐵"}
+LENSES = {"music_festival": "音樂祭", "folk": "民俗祭典", "endurance": "路跑三鐵",
+          "film": "影展放映", "exhibition": "展覽美術", "theatre_dance": "劇場舞蹈", "live_music": "現場音樂"}
 
 
 def validate_catalog(catalog: dict) -> None:
@@ -27,6 +28,8 @@ def validate_catalog(catalog: dict) -> None:
             if url.scheme != "https" or not url.netloc:
                 raise ValueError("selection needs an HTTPS source")
             date.fromisoformat(item["checked_on"])
+            from .booking import validate
+            validate(item.get("booking"))
             if group == "watchlist":
                 if item.get("start_time") or item.get("end_time"):
                     raise ValueError("undated watchlist must not contain calendar dates")

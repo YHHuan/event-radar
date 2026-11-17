@@ -387,6 +387,26 @@ try {
   if (new URL(dates.url()).searchParams.has('date') || !(await dates.locator('#custom-dates').isHidden())) throw new Error('reset retained custom date');
   await dates.close();
 
+  // Booking deadlines survive saves but cannot masquerade as freshly checked.
+  const bookingPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  bookingPage.on('pageerror', (error) => errors.push(`booking: ${error.message}`));
+  const todayTW = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' });
+  const shifted = days => new Date(new Date(`${todayTW}T00:00:00Z`).getTime() + days * 86400000).toISOString().slice(0, 10);
+  const bookingEvent = { ...makeEvent('test-booking', '跨年展覽預售', 'music_festival', shifted(90), shifted(120)),
+    booking: { status: 'announced', checked_on: todayTW, early_bird_end: shifted(2), url: 'https://example.com/tickets' } };
+  const bookingFixture = { ...fixture, today: todayTW, events: [bookingEvent] };
+  await bookingPage.route('**/events.json', route => route.fulfill({ json: bookingFixture }));
+  await bookingPage.goto(`${base}?when=all&city=all`, { waitUntil: 'networkidle' });
+  if (!(await bookingPage.locator('.event-card').innerText()).includes(`早鳥截止 ${shifted(2)}`)) throw new Error('booking deadline missing');
+  await bookingPage.locator('button[data-action="save"]').click();
+  const savedBooking = await bookingPage.evaluate(() => JSON.parse(localStorage.getItem('ake-event-radar:saved:v2')).items[0].booking);
+  if (savedBooking.early_bird_end !== shifted(2)) throw new Error('saved event lost booking evidence');
+  bookingEvent.booking.checked_on = shifted(-8);
+  await bookingPage.reload({ waitUntil: 'networkidle' });
+  const staleText = await bookingPage.locator('.event-card').innerText();
+  if (!staleText.includes('待重新確認') || staleText.includes('早鳥截止')) throw new Error('stale booking presented as fresh urgency');
+  await bookingPage.close();
+
   const desktop = await checkViewport(1440, 1000, 'home-desktop');
   await desktop.close();
 

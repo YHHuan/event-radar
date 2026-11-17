@@ -1,6 +1,103 @@
 # Public source network. "manual" means a useful window, never a claimed feed.
 # Date corrections live in highlights.yaml and override matching feed editions.
 sources:
+  - id: ntu-film
+    name: 臺大電影節
+    mode: automatic
+    kind: ntu_film
+    url: https://moviefest.ntusa.ntu.edu.tw/
+    endpoint: https://moviefest.ntusa.ntu.edu.tw/now-playing.html
+    lenses:
+    - film
+    note: 官方當屆片單與完整放映時間；校內外觀眾皆可參加，特殊場次另查報名。
+  - id: nccu-arts
+    name: 政大藝文中心
+    mode: automatic
+    kind: nccu_arts
+    url: https://artist.nccu.edu.tw/
+    endpoint: https://artist.nccu.edu.tw/program_c.html
+    lenses:
+    - film
+    - theatre_dance
+    - live_music
+    note: 學期節目表及各節目日期；同節目的不同場次合併保留，名額與校外參加資格依官方報名頁。
+  - id: fubon
+    name: 富邦美術館
+    mode: automatic
+    kind: fubon
+    url: https://www.fubonartmuseum.org/Exhibitions
+    lenses:
+    - exhibition
+    note: 現正與預告展覽，保留跨年展期；開館時段、票價及預約依館方公告。
+  - id: tfam
+    name: 臺北市立美術館
+    mode: automatic
+    kind: tfam
+    url: https://www.tfam.museum/Exhibition/Exhibition.aspx?ddlLang=zh-tw
+    endpoint: https://www.tfam.museum/ashx/Exhibition.ashx?ddlLang=zh-tw
+    lenses:
+    - exhibition
+    note: 官網當期與預告展覽的公開資料；排除威尼斯及純線上展，週一休館，出發前核對異動。
+  - id: tcam
+    name: 臺中市立美術館
+    mode: automatic
+    kind: tcam
+    url: https://www.tcam.museum/zh/
+    lenses:
+    - exhibition
+    note: 綠美圖當期與預告展，包含國巨基金會典藏展及建築、新媒體藝術；展期與開館日分開。
+  - id: opentix-planning
+    name: OPENTIX 藝文預售
+    mode: automatic
+    kind: opentix_planning
+    url: https://www.opentix.life/event
+    lenses:
+    - theatre_dance
+    - live_music
+    - film
+    watch_urls:
+    - https://www.opentix.life/event/2112827249197789184
+    - https://www.opentix.life/event/2108010089152028673
+    note: 有界限追蹤公開節目與長期預售，最遠兩年；保留每場日期和公告開賣日，票況仍以售票頁為準。
+  - id: ntnu-film
+    name: 臺師大人文電影節
+    mode: manual
+    url: https://www.instagram.com/ntnuhff/
+    lenses:
+    - film
+    note: 官方當屆片單主要發布於社群；逐場時間尚需核對，未將彙整網站的場次當成已驗證官方資料。
+  - id: nccu-film
+    name: 政大電影節
+    mode: manual
+    url: https://linktr.ee/nccu_filmfest
+    lenses:
+    - film
+    note: 電影節官方入口；下一屆日期尚待公告，不沿用已結束的2026春季日期。
+  - id: nccu-jinyong
+    name: 政大金勇影展／影音實驗室
+    mode: manual
+    url: https://avlab.nccu.edu.tw/PageDoc?fid=11304
+    lenses:
+    - film
+    note: 學生創作與映後交流；與政大電影節、藝文中心節目分開追蹤。
+  - id: ntu-arts
+    name: 臺大藝文中心
+    mode: manual
+    url: https://arts.ntu.edu.tw/
+    lenses:
+    - theatre_dance
+    - exhibition
+    - live_music
+    note: 校園漫遊劇場、展覽與演出；逐項核對校外參與資格，教職員限定不當成公開活動。
+  - id: ntch-season
+    name: 國家兩廳院藝術節與節目
+    mode: manual
+    url: https://npac-ntch.org/programs
+    lenses:
+    - theatre_dance
+    - live_music
+    - exhibition
+    note: 秋天藝術節、跨領域與沉浸式現場；售票頁由OPENTIX追蹤，留意會員先購及一般開賣的差別。
   - id: indievox
     name: iNDIEVOX
     mode: automatic

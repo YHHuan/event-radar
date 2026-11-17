@@ -1,0 +1,17 @@
+# Verified deadlines retain their own check date even if the event refreshes.
+# Never infer a last-ticket warning from an AggregateOffer or a purchase link.
+reviews:
+  - event_url: https://www.tcam.museum/zh/exhibition/蠍子與青蛙：國巨基金會典藏展
+    url: https://www.tcam.museum/zh/visit
+    checked_on: '2026-11-17'
+    status: announced
+    sale_start: '2026-10-15'
+    early_bird_end: '2026-11-19'
+    note: 早鳥200元；非預約票與假日預約時段票規則不同，購買前請看館方說明。
+  - event_url: https://www.opentix.life/event/2112827249197789184
+    url: https://www.opentix.life/event/2112827249197789184
+    checked_on: '2026-11-17'
+    status: announced
+    sale_start: '2026-11-13T12:00:00'
+    early_bird_end: '2026-11-20T12:00:00'
+    note: 早鳥折扣需官方優惠代碼且有票區限制；仍須確認實際票況。
